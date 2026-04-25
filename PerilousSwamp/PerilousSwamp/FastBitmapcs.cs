@@ -1,10 +1,9 @@
-﻿#nullable enable
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 
-namespace PerlinMapGenerator;
+namespace PerilousSwamp;
 
 /*
    FastBitmapLib
