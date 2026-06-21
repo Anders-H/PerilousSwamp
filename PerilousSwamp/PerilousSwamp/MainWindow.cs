@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -7,8 +8,18 @@ namespace PerilousSwamp;
 
 public partial class MainWindow : Form
 {
+    public new static Font Font;
+    private TextOutput _textOutput;
+    private GuiState _guiState;
+
+    static MainWindow()
+    {
+        Font = new Font();
+    }
+
     public MainWindow()
     {
+        _textOutput = new TextOutput();
         InitializeComponent();
     }
 
@@ -37,7 +48,21 @@ public partial class MainWindow : Form
 
     private void MainWindow_Shown(object sender, EventArgs e)
     {
+        Refresh();
         MainWindow_Resize(sender, e);
+        LockGui(true);
+    }
+
+    private void LockGui(bool locked)
+    {
+        if (locked)
+        {
+            Cursor = Cursors.WaitCursor;
+        }
+        else
+        {
+            Cursor = Cursors.Default;
+        }
     }
 
     private void pictureBox1_Paint(object sender, PaintEventArgs e)
@@ -45,6 +70,9 @@ public partial class MainWindow : Form
         e.Graphics.CompositingQuality = CompositingQuality.HighSpeed;
         e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
         e.Graphics.SmoothingMode = SmoothingMode.None;
-        e.Graphics.DrawImage(Properties.Resources.gui_outline, pictureBox1.ClientRectangle);
+        using var bitmap = new Bitmap(Properties.Resources.gui_outline);
+        using var graphics = Graphics.FromImage(bitmap);
+        _textOutput.Draw(graphics);
+        e.Graphics.DrawImage(bitmap, pictureBox1.ClientRectangle);
     }
 }
