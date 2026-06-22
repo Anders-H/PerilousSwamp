@@ -28,8 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.imgListDekor = new System.Windows.Forms.ImageList(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -42,6 +44,14 @@
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             this.pictureBox1.Paint += new System.Windows.Forms.PaintEventHandler(this.pictureBox1_Paint);
+            // 
+            // imgListDekor
+            // 
+            this.imgListDekor.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imgListDekor.ImageStream")));
+            this.imgListDekor.TransparentColor = System.Drawing.Color.Transparent;
+            this.imgListDekor.Images.SetKeyName(0, "princess.png");
+            this.imgListDekor.Images.SetKeyName(1, "swamp.png");
+            this.imgListDekor.Images.SetKeyName(2, "evil_wizard.png");
             // 
             // MainWindow
             // 
@@ -64,6 +74,7 @@
         #endregion
 
         private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.ImageList imgListDekor;
     }
 }
 
