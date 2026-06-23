@@ -186,4 +186,21 @@ public partial class MainWindow : Form
             }
         }
     }
+
+    private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (pictureBox1 == null)
+            return;
+
+        var scaleX = 320.0 / pictureBox1.Width;
+        var scaleY = 200.0 / pictureBox1.Height;
+        _mouseX = (int)(e.X * scaleX);
+        _mouseY = (int)(e.Y * scaleY);
+
+#if DEBUG
+        Text = $@"{_mouseX} x {_mouseY}";
+#endif
+
+
+    }
 }
