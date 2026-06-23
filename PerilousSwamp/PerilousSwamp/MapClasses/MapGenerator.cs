@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace PerilousSwamp.MapClasses;
 
-public static class MapGenerator
+internal static class MapGenerator
 {
-    private static readonly Random Rnd = new Random();
+    private static readonly Random Rnd = new();
     private const int Wall = 1;
     private const int Free = 2;
     private const int Obstacle = 3;
@@ -26,6 +26,11 @@ public static class MapGenerator
             Shuffle(freeCells);
             var (px, py) = freeCells[0];
             var (tx, ty) = freeCells[1];
+
+            var distance = Math.Abs(px - tx) + Math.Abs(py - ty);
+
+            if (distance < 6)
+                continue;
 
             if (!CanReach(mapGrid, px, py, tx, ty))
                 continue;

@@ -1,18 +1,16 @@
-﻿namespace PerilousSwamp.MapClasses;
+﻿using System;
+
+namespace PerilousSwamp.MapClasses;
 
 public class Map
 {
     public const int Size = 20;
     public const int ViewportSize = 10;
-
     public int[,] Grid { get; private set; }
-
     public int PlayerX { get; private set; }
     public int PlayerY { get; private set; }
-
     public int PrincessX { get; private set; }
     public int PrincessY { get; private set; }
-
     public int ViewportOffsetX { get; private set; }
     public int ViewportOffsetY { get; private set; }
 
@@ -36,29 +34,29 @@ public class Map
 
     private void UpdateViewport()
     {
-        // Försök hitta ett offset som visar både spelaren och prinsessan.
-        // Annars prioriteras spelaren och vi minimerar avståndet till prinsessan.
-        int bestX = 0, bestY = 0;
-        int bestScore = int.MinValue;
+        var bestX = 0;
+        var bestY = 0;
+        var bestScore = int.MinValue;
+        const int maxOffsetX = Size - ViewportSize;
+        const int maxOffsetY = Size - ViewportSize;
 
-        int maxOffsetX = Size - ViewportSize;
-        int maxOffsetY = Size - ViewportSize;
-
-        for (int oy = 0; oy <= maxOffsetY; oy++)
+        for (var oy = 0; oy <= maxOffsetY; oy++)
         {
-            for (int ox = 0; ox <= maxOffsetX; ox++)
+            for (var ox = 0; ox <= maxOffsetX; ox++)
             {
-                bool playerVisible = Contains(ox, oy, PlayerX, PlayerY);
+                var playerVisible = Contains(ox, oy, PlayerX, PlayerY);
+
                 if (!playerVisible)
                     continue;
 
-                int score = ScoreViewport(ox, oy);
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                    bestX = ox;
-                    bestY = oy;
-                }
+                var score = ScoreViewport(ox, oy);
+
+                if (score <= bestScore)
+                    continue;
+
+                bestScore = score;
+                bestX = ox;
+                bestY = oy;
             }
         }
 
@@ -68,28 +66,30 @@ public class Map
 
     private int ScoreViewport(int ox, int oy)
     {
-        // Prinsessan synlig = högt baspoäng
+        var viewCenterXi = ox + ViewportSize / 2;
+        var viewCenterYi = oy + ViewportSize / 2;
+        var distToPlayer = Math.Abs(PlayerX - viewCenterXi) + Math.Abs(PlayerY - viewCenterYi);
+
         if (Contains(ox, oy, PrincessX, PrincessY))
-            return 1000;
+            return 1000 - distToPlayer;
 
-        // Annars: ju närmre prinsessan är viewportens kant, desto bättre
-        int distX = DistanceToRange(PrincessX, ox, ox + ViewportSize - 1);
-        int distY = DistanceToRange(PrincessY, oy, oy + ViewportSize - 1);
-        int manhattanToEdge = distX + distY;
-
-        return -manhattanToEdge;
+        var distX = DistanceToRange(PrincessX, ox, ox + ViewportSize - 1);
+        var distY = DistanceToRange(PrincessY, oy, oy + ViewportSize - 1);
+        var manhattanToEdge = distX + distY;
+        return -manhattanToEdge * 10 - distToPlayer;
     }
 
-    private static bool Contains(int ox, int oy, int x, int y)
-    {
-        return x >= ox && x < ox + ViewportSize &&
-               y >= oy && y < oy + ViewportSize;
-    }
+    private static bool Contains(int ox, int oy, int x, int y) =>
+        x >= ox && x < ox + ViewportSize && y >= oy && y < oy + ViewportSize;
 
     private static int DistanceToRange(int value, int min, int max)
     {
-        if (value < min) return min - value;
-        if (value > max) return value - max;
+        if (value < min)
+            return min - value;
+        
+        if (value > max)
+            return value - max;
+        
         return 0;
     }
 }
