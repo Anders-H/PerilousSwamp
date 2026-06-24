@@ -44,10 +44,15 @@ public class Map
         {
             for (var ox = 0; ox <= maxOffsetX; ox++)
             {
-                var playerVisible = Contains(ox, oy, PlayerX, PlayerY);
+                var playerHasMargin = ContainsWithMargin(ox, oy, PlayerX, PlayerY, margin: 1);
 
-                if (!playerVisible)
-                    continue;
+                if (!playerHasMargin)
+                {
+                    var cameraIsLocked = ox is 0 or maxOffsetX && oy is 0 or maxOffsetY;
+
+                    if (!cameraIsLocked || !Contains(ox, oy, PlayerX, PlayerY))
+                        continue;
+                }
 
                 var score = ScoreViewport(ox, oy);
 
@@ -63,6 +68,10 @@ public class Map
         ViewportOffsetX = bestX;
         ViewportOffsetY = bestY;
     }
+
+    private static bool ContainsWithMargin(int ox, int oy, int x, int y, int margin) =>
+        x >= ox + margin && x < ox + ViewportSize - margin &&
+        y >= oy + margin && y < oy + ViewportSize - margin;
 
     private int ScoreViewport(int ox, int oy)
     {

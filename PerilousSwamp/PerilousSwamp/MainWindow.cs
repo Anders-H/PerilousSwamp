@@ -11,12 +11,14 @@ namespace PerilousSwamp;
 public partial class MainWindow : Form
 {
     public new static Font Font;
+    private Bitmap? _gameBitmap;
     private int _mouseX;
     private int _mouseY;
     private string _currentDecorationImage;
     private readonly TextOutput _textOutput;
     private readonly Map _map;
     private GuiState _guiState;
+    private GameState _gameState;
 
     static MainWindow()
     {
@@ -25,6 +27,7 @@ public partial class MainWindow : Form
 
     public MainWindow()
     {
+        _gameState = GameState.PickDirection;
         _currentDecorationImage = "swamp.png";
         _textOutput = new TextOutput();
         _map = new Map();
@@ -59,16 +62,18 @@ public partial class MainWindow : Form
         Refresh();
         MainWindow_Resize(sender, e);
         LockGui(true);
+#if !DEBUG
         TypeWrite("In this game, you find yourself in a swampy forest. Your task is to find your way to the edge, alive, and with as much treasure as possible.");
         TypeWrite("");
         _currentDecorationImage = "princess.png";
         TypeWrite("A beautiful princess is held by an evil wizard. The king wouldn't mind if you could release her...");
         _currentDecorationImage = "evil_wizard.png";
         TypeWrite("");
+#endif
         TypeWrite("Should you have to leave early, typing \"out\" should get you out - permanently.");
         _currentDecorationImage = "swamp.png";
-        Refresh();
         LockGui(false);
+        Refresh();
     }
 
     private void TypeWrite(string text)
@@ -136,8 +141,10 @@ public partial class MainWindow : Form
         e.Graphics.CompositingQuality = CompositingQuality.HighSpeed;
         e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
         e.Graphics.SmoothingMode = SmoothingMode.None;
-        using var bitmap = new Bitmap(Properties.Resources.gui_outline);
-        using var graphics = Graphics.FromImage(bitmap);
+        _gameBitmap ??= new Bitmap(320, 200, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+        using var g = Graphics.FromImage(_gameBitmap);
+        g.DrawImage(Properties.Resources.gui_outline, 0, 0, 320, 200);
+        using var graphics = Graphics.FromImage(_gameBitmap);
         var aktuellDekor = imgListDekor.Images[_currentDecorationImage];
 
         if (aktuellDekor != null)
@@ -145,7 +152,18 @@ public partial class MainWindow : Form
 
         DrawMap(118, 8, graphics);
         _textOutput.Draw(graphics);
-        e.Graphics.DrawImage(bitmap, pictureBox1.ClientRectangle);
+
+        if (_guiState == GuiState.WaitingForUserInput)
+        {
+            switch (_gameState)
+            {
+                case GameState.PickDirection:
+                    graphics.DrawImage(Properties.Resources.Compass, new Rectangle(214, 3, 110, 110));
+                    break;
+            }
+        }
+
+        e.Graphics.DrawImage(_gameBitmap, pictureBox1.ClientRectangle);
     }
 
     private void DrawMap(int x, int y, Graphics g)
@@ -200,7 +218,47 @@ public partial class MainWindow : Form
 #if DEBUG
         Text = $@"{_mouseX} x {_mouseY}";
 #endif
+    }
 
-
+    private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
+    {
+        if (_guiState == GuiState.WaitingForUserInput)
+        {
+            switch (_gameState)
+            {
+                case GameState.PickDirection:
+                    switch (Compass.GetDirectionFromCoordinate(_mouseX, _mouseY))
+                    {
+                        case CompassDirection.NoOperation:
+                            TypeWrite("Nop");
+                            break;
+                        case CompassDirection.North:
+                            TypeWrite("North");
+                            break;
+                        case CompassDirection.Ne:
+                            TypeWrite("Northeast");
+                            break;
+                        case CompassDirection.East:
+                            TypeWrite("East");
+                            break;
+                        case CompassDirection.Se:
+                            TypeWrite("Southeast");
+                            break;
+                        case CompassDirection.South:
+                            TypeWrite("South");
+                            break;
+                        case CompassDirection.Sw:
+                            TypeWrite("Southwest");
+                            break;
+                        case CompassDirection.West:
+                            TypeWrite("West");
+                            break;
+                        case CompassDirection.Nw:
+                            TypeWrite("Northwest");
+                            break;
+                    }
+                    break;
+            }
+        }
     }
 }
