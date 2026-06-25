@@ -32,6 +32,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.imgListDekor = new System.Windows.Forms.ImageList(this.components);
+            this.imgListMap = new System.Windows.Forms.ImageList(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -55,6 +56,15 @@
             this.imgListDekor.Images.SetKeyName(1, "swamp.png");
             this.imgListDekor.Images.SetKeyName(2, "evil_wizard.png");
             // 
+            // imgListMap
+            // 
+            this.imgListMap.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imgListMap.ImageStream")));
+            this.imgListMap.TransparentColor = System.Drawing.Color.Transparent;
+            this.imgListMap.Images.SetKeyName(0, "edge_icon.png");
+            this.imgListMap.Images.SetKeyName(1, "player_icon.png");
+            this.imgListMap.Images.SetKeyName(2, "princess_icon.png");
+            this.imgListMap.Images.SetKeyName(3, "swamp_icon.png");
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -77,6 +87,7 @@
 
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.ImageList imgListDekor;
+        private System.Windows.Forms.ImageList imgListMap;
     }
 }
 

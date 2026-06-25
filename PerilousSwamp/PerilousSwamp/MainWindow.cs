@@ -16,7 +16,8 @@ public partial class MainWindow : Form
     private int _mouseY;
     private string _currentDecorationImage;
     private readonly TextOutput _textOutput;
-    private readonly Map _map;
+    private Map _map;
+    private GameProperties _gameProperties;
     private GuiState _guiState;
     private GameState _gameState;
 
@@ -30,8 +31,32 @@ public partial class MainWindow : Form
         _gameState = GameState.PickDirection;
         _currentDecorationImage = "swamp.png";
         _textOutput = new TextOutput();
-        _map = new Map();
+        NewGame();
         InitializeComponent();
+    }
+
+    private void NewGame()
+    {
+        _gameState = GameState.PickDirection;
+        _map = new Map();
+        _gameProperties = new GameProperties();
+    }
+
+    private void PlayGameIntro()
+    {
+        LockGui(true);
+#if !DEBUG
+        TypeWrite("In this game, you find yourself in a swampy forest. Your task is to find your way to the edge, alive, and with as much treasure as possible.");
+        TypeWrite("");
+        _currentDecorationImage = "princess.png";
+        TypeWrite("A beautiful princess is held by an evil wizard. The king wouldn't mind if you could release her...");
+        _currentDecorationImage = "evil_wizard.png";
+        TypeWrite("");
+#endif
+        TypeWrite("Should you have to leave early, typing \"out\" should get you out - permanently.");
+        _currentDecorationImage = "swamp.png";
+        LockGui(false);
+        Refresh();
     }
 
     private void MainWindow_Resize(object sender, EventArgs e)
@@ -61,19 +86,7 @@ public partial class MainWindow : Form
     {
         Refresh();
         MainWindow_Resize(sender, e);
-        LockGui(true);
-#if !DEBUG
-        TypeWrite("In this game, you find yourself in a swampy forest. Your task is to find your way to the edge, alive, and with as much treasure as possible.");
-        TypeWrite("");
-        _currentDecorationImage = "princess.png";
-        TypeWrite("A beautiful princess is held by an evil wizard. The king wouldn't mind if you could release her...");
-        _currentDecorationImage = "evil_wizard.png";
-        TypeWrite("");
-#endif
-        TypeWrite("Should you have to leave early, typing \"out\" should get you out - permanently.");
-        _currentDecorationImage = "swamp.png";
-        LockGui(false);
-        Refresh();
+        PlayGameIntro();
     }
 
     private void TypeWrite(string text)
@@ -172,34 +185,35 @@ public partial class MainWindow : Form
         {
             for (var visibleX = 0; visibleX < Map.ViewportSize; visibleX++)
             {
-                // Räkna ut exakt vilken koordinat på den STORA kartan vi är på just nu
                 var currentMapX = _map.ViewportOffsetX + visibleX;
                 var currentMapY = _map.ViewportOffsetY + visibleY;
-
-                // Räkna ut var på skärmen (i pixlar) rutan ska ritas
                 var physicalX = x + visibleX * 10;
                 var physicalY = y + visibleY * 10;
 
-                // Säkerhetskontroll så vi inte går utanför arrayens gränser (0 till Size-1)
-                if (currentMapX >= 0 && currentMapX < Map.Size && currentMapY >= 0 && currentMapY < Map.Size)
+                if (currentMapX is >= 0 and < Map.Size && currentMapY is >= 0 and < Map.Size)
                 {
-                    // VIKTIGT: Arrayen är [y, x] -> alltså [rad, kolumn]
                     var data = _map.Grid[currentMapY, currentMapX];
 
-                    // Rita ut terrängsiffran (1, 2, 3...)
-                    g.DrawString(data.ToString(), base.Font, Brushes.Red, physicalX, physicalY);
+                    switch (data)
+                    {
+                        case MapGenerator.Obstacle:
+                            g.DrawImage(imgListMap.Images[3], new Rectangle(physicalX, physicalY, 10, 10));
+                            break;
+                        case MapGenerator.Edge:
+                            g.DrawImage(imgListMap.Images[0], new Rectangle(physicalX, physicalY, 10, 10));
+                            break;
+                        case MapGenerator.Free:
+                        case MapGenerator.Player:
+                        case MapGenerator.Princess:
+                            // Draw nothing for free space. Player and princess is just their start position, not current.
+                            break;
+                    }
 
-                    // Kontrollera om spelaren står på denna specifika kartkoordinat
                     if (currentMapX == _map.PlayerX && currentMapY == _map.PlayerY)
-                    {
-                        g.DrawString("P", base.Font, Brushes.Yellow, physicalX, physicalY);
-                    }
+                        g.DrawImage(imgListMap.Images[1], new Rectangle(physicalX, physicalY, 10, 10));
 
-                    // Kontrollera om prinsessan står på denna specifika kartkoordinat
-                    if (currentMapX == _map.PrincessX && currentMapY == _map.PrincessY)
-                    {
-                        g.DrawString("Q", base.Font, Brushes.Yellow, physicalX, physicalY);
-                    }
+                    if (!_gameProperties.PrincessIsPickedUp && currentMapX == _map.PrincessX && currentMapY == _map.PrincessY)
+                        g.DrawImage(imgListMap.Images[2], new Rectangle(physicalX, physicalY, 10, 10));
                 }
             }
         }
@@ -224,40 +238,136 @@ public partial class MainWindow : Form
     {
         if (_guiState == GuiState.WaitingForUserInput)
         {
+            LockGui(true);
+
             switch (_gameState)
             {
                 case GameState.PickDirection:
                     switch (Compass.GetDirectionFromCoordinate(_mouseX, _mouseY))
                     {
                         case CompassDirection.NoOperation:
-                            TypeWrite("Nop");
                             break;
                         case CompassDirection.North:
+                            TypeWrite("");
                             TypeWrite("North");
+                            MovePlayer(-1, 0);
                             break;
                         case CompassDirection.Ne:
+                            TypeWrite("");
                             TypeWrite("Northeast");
+                            MovePlayer(-1, 1);
                             break;
                         case CompassDirection.East:
+                            TypeWrite("");
                             TypeWrite("East");
+                            MovePlayer(0, 1);
                             break;
                         case CompassDirection.Se:
+                            TypeWrite("");
                             TypeWrite("Southeast");
+                            MovePlayer(1, 1);
                             break;
                         case CompassDirection.South:
+                            TypeWrite("");
                             TypeWrite("South");
+                            MovePlayer(1, 0);
                             break;
                         case CompassDirection.Sw:
+                            TypeWrite("");
                             TypeWrite("Southwest");
+                            MovePlayer(1, -1);
                             break;
                         case CompassDirection.West:
+                            TypeWrite("");
                             TypeWrite("West");
+                            MovePlayer(0, -1);
                             break;
                         case CompassDirection.Nw:
+                            TypeWrite("");
                             TypeWrite("Northwest");
+                            MovePlayer(-1, -1);
                             break;
                     }
                     break;
+            }
+
+            LockGui(false);
+        }
+    }
+
+    private void MovePlayer(int diffY, int diffX)
+    {
+        var newX = _map.PlayerX + diffX;
+        var newY = _map.PlayerY + diffY;
+        var data = _map.Grid[newY, newX];
+
+        if (data == MapGenerator.Obstacle)
+        {
+            LockGui(true);
+            TypeWrite("");
+            TypeWrite("Too wet that way, clot!");
+            LockGui(false);
+            _gameState = GameState.PickDirection;
+            _guiState = GuiState.WaitingForUserInput;
+            Refresh();
+            return;
+        }
+
+        if (data == MapGenerator.Free)
+        {
+            _map.PlayerX = newX;
+            _map.PlayerY = newY;
+            _map.UpdateViewport();
+            Refresh();
+            _gameState = GameState.PickDirection;
+            _guiState = GuiState.WaitingForUserInput;
+            Refresh();
+        }
+        else if (data == MapGenerator.Princess)
+        {
+            if (_gameProperties.PrincessIsPickedUp)
+            {
+                _map.PlayerX = newX;
+                _map.PlayerY = newY;
+                _map.UpdateViewport();
+                Refresh();
+                _gameState = GameState.PickDirection;
+                _guiState = GuiState.WaitingForUserInput;
+                Refresh();
+                LockGui(true);
+                TypeWrite("");
+                TypeWrite("You have been here before. You picked up the princess here, and she is happy to be rescued by you! Bring her on your journey ahead!");
+                LockGui(false);
+            }
+            else
+            {
+                _map.PlayerX = newX;
+                _map.PlayerY = newY;
+                _map.UpdateViewport();
+                Refresh();
+                _gameState = GameState.PickDirection;
+                _guiState = GuiState.WaitingForUserInput;
+                Refresh();
+                LockGui(true);
+                TypeWrite("");
+
+                // A green, dirty wizard is guarding a fair princess.
+                // The wizard has his pet Bunyip with him, and his combat points come to 120.
+
+                // Do you wish to fight, run or bribe?
+                
+                //--- Sucess:
+
+                // You sure smashed that monster. Your ill-gotten gains now come to 126 points. The princess comes with you.
+
+                //--- Failure:
+
+                // Too bad... The monster ate you... And took all your treasure!
+                // Pity about the princess... The wizard fed her to a dragon. The king is not all that pleased.
+
+                // Try again? You could get lucky!
+
+                LockGui(false);
             }
         }
     }

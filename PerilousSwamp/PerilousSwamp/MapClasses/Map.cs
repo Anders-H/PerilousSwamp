@@ -7,8 +7,8 @@ public class Map
     public const int Size = 20;
     public const int ViewportSize = 10;
     public int[,] Grid { get; private set; }
-    public int PlayerX { get; private set; }
-    public int PlayerY { get; private set; }
+    public int PlayerX { get; set; }
+    public int PlayerY { get; set; }
     public int PrincessX { get; private set; }
     public int PrincessY { get; private set; }
     public int ViewportOffsetX { get; private set; }
@@ -32,7 +32,7 @@ public class Map
         PrincessY = y;
     }
 
-    private void UpdateViewport()
+    public void UpdateViewport()
     {
         var bestX = 0;
         var bestY = 0;

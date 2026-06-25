@@ -6,11 +6,11 @@ namespace PerilousSwamp.MapClasses;
 internal static class MapGenerator
 {
     private static readonly Random Rnd = new();
-    private const int Wall = 1;
-    private const int Free = 2;
-    private const int Obstacle = 3;
-    private const int Player = 4;
-    private const int Princess = 5;
+    public const int Edge = 1;
+    public const int Free = 2;
+    public const int Obstacle = 3;
+    public const int Player = 4;
+    public const int Princess = 5;
 
     public static int[,] GenerateMap(Map map)
     {
@@ -52,7 +52,7 @@ internal static class MapGenerator
             for (var x = 0; x < Map.Size; x++)
             {
                 map[y, x] = x == 0 || y == 0 || x == Map.Size - 1 || y == Map.Size - 1
-                    ? Wall
+                    ? Edge
                     : Free;
             }
         }
@@ -125,7 +125,7 @@ internal static class MapGenerator
                 if (visited[ny, nx])
                     continue;
 
-                if (map[ny, nx] == Wall || map[ny, nx] == Obstacle)
+                if (map[ny, nx] == Edge || map[ny, nx] == Obstacle)
                     continue;
 
                 visited[ny, nx] = true;
