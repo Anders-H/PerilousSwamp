@@ -91,7 +91,7 @@ public partial class MainWindow : Form
 
     private void TypeWrite(string text)
     {
-        const int typeWriterSpeed = 80;
+        const int typeWriterSpeed = 30;
 
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -301,7 +301,11 @@ public partial class MainWindow : Form
         var newY = _map.PlayerY + diffY;
         var data = _map.Grid[newY, newX];
 
-        if (data == MapGenerator.Obstacle)
+        if (data == MapGenerator.Edge)
+        {
+
+        }
+        else if (data == MapGenerator.Obstacle)
         {
             LockGui(true);
             TypeWrite("");
@@ -310,14 +314,24 @@ public partial class MainWindow : Form
             _gameState = GameState.PickDirection;
             _guiState = GuiState.WaitingForUserInput;
             Refresh();
-            return;
         }
-
-        if (data == MapGenerator.Free)
+        else if (data == MapGenerator.Free)
         {
             _map.PlayerX = newX;
             _map.PlayerY = newY;
             _map.UpdateViewport();
+            Refresh();
+            _gameState = GameState.PickDirection;
+            _guiState = GuiState.WaitingForUserInput;
+            Refresh();
+        }
+        else if (data == MapGenerator.Player)
+        {
+            _map.PlayerX = newX;
+            _map.PlayerY = newY;
+            _map.UpdateViewport();
+            TypeWrite("");
+            TypeWrite("This is where you found yourself when the game started.");
             Refresh();
             _gameState = GameState.PickDirection;
             _guiState = GuiState.WaitingForUserInput;
@@ -355,10 +369,11 @@ public partial class MainWindow : Form
                 // The wizard has his pet Bunyip with him, and his combat points come to 120.
 
                 // Do you wish to fight, run or bribe?
-                
-                //--- Sucess:
 
-                // You sure smashed that monster. Your ill-gotten gains now come to 126 points. The princess comes with you.
+                //--- Sucess:
+                _gameProperties.PrincessIsPickedUp = true;
+                TypeWrite("");
+                TypeWrite("You sure smashed that monster. Your ill-gotten gains now come to XXXXX points. The princess comes with you.");
 
                 //--- Failure:
 
@@ -368,6 +383,7 @@ public partial class MainWindow : Form
                 // Try again? You could get lucky!
 
                 LockGui(false);
+                Refresh();
             }
         }
     }

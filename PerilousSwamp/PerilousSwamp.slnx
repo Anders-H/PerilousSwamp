@@ -1,3 +1,7 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="zx81_source.bas" />
+  </Folder>
+  <Project Path="MrSwampMonster/MrSwampMonster.vbproj" Id="05013d6b-3dfc-40aa-a86f-45aa1e4af435" />
   <Project Path="PerilousSwamp/PerilousSwamp.csproj" Id="c4123fec-ee10-4c97-8111-4fd4b15e7b45" />
 </Solution>
