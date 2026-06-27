@@ -1,52 +1,76 @@
 ﻿Public Class Monster
 
     Private Shared ReadOnly Rnd As New Random()
-    Public CombatStrength As Integer
+    Public ReadOnly MonsterCombatStrength As Integer
+    Public ReadOnly MonsterName As String
 
-    Public Sub New(combatStrength As Integer)
-        combatStrength = combatStrength
+    Public Sub New(monasterCombatStrength As Integer)
+        MonsterCombatStrength = monasterCombatStrength
+        Dim monsterFirstIndex = Rnd.Next(0, 8)
+        Dim monsterSecondIndex = Rnd.Next(0, 8)
+
+        While monsterSecondIndex = monsterFirstIndex
+            monsterSecondIndex = Rnd.Next(0, 8)
+        End While
+
+        Dim monsterNameFirstPart = ""
+        Dim monsterNameSecondPart = ""
+
+        Select Case monsterFirstIndex
+            Case 0
+                monsterNameFirstPart = "Fiendish, "
+            Case 1
+                monsterNameFirstPart = "Green, "
+            Case 2
+                monsterNameFirstPart = "Lean, "
+            Case 3
+                monsterNameFirstPart = "Hungry, "
+            Case 4
+                monsterNameFirstPart = "Nasty, "
+            Case 5
+                monsterNameFirstPart = "Tough, "
+            Case 6
+                monsterNameFirstPart = "Horrible, "
+            Case 7
+                monsterNameFirstPart = "Dirty, "
+        End Select
+
+        Select Case monsterSecondIndex
+            Case 0
+                monsterNameSecondPart = "Fiendish "
+            Case 1
+                monsterNameSecondPart = "Green "
+            Case 2
+                monsterNameSecondPart = "Lean "
+            Case 3
+                monsterNameSecondPart = "Hungry "
+            Case 4
+                monsterNameSecondPart = "Nasty "
+            Case 5
+                monsterNameSecondPart = "Tough "
+            Case 6
+                monsterNameSecondPart = "Horrible "
+            Case 7
+                monsterNameSecondPart = "Dirty "
+        End Select
+
+
     End Sub
 
-    Public Shared Function ResolveCombat(playerSacrifice As Integer, monsterStrength As Integer) As Integer
+    Function ResolveCombat(playerStrength As Integer) As Integer
+        Dim baseDifference As Integer = playerStrength - MonsterCombatStrength
+        Dim randomFactor As Integer = Rnd.Next(-50, 51)
+        Dim result As Integer = baseDifference + randomFactor
 
-        If monsterStrength <= 0 Then
-            monsterStrength = 1
+        If result = 0 Then
+            If Rnd.Next(0, 2) = 0 Then
+                result = 1
+            Else
+                result = -1
+            End If
         End If
 
-        If playerSacrifice < 0 Then
-            playerSacrifice = 0
-        End If
-
-        Dim ratio As Double = CDbl(playerSacrifice) / monsterStrength
-        Dim winChance = CInt(ratio * 50)
-        winChance = Clamp(winChance, 5, 95)
-        Dim roll As Integer = Rnd.[Next](0, 100)
-        Dim isWin As Boolean = roll < winChance
-        Dim baseDifference As Integer = playerSacrifice - monsterStrength
-        Dim variance As Integer = Rnd.[Next](-3, 4)
-
-        If isWin Then
-            Dim winValue As Integer = baseDifference + variance
-            Return Math.Max(1, winValue)
-        Else
-            Dim lossValue As Integer = baseDifference + variance
-            Return Math.Min(-1, lossValue)
-        End If
-
-    End Function
-
-    Private Shared Function Clamp(value As Integer, min As Integer, max As Integer) As Integer
-
-        If value < min Then
-            Return min
-        End If
-
-        If value > max Then
-            Return max
-        End If
-
-        Return value
-
+        Return result
     End Function
 
 End Class
