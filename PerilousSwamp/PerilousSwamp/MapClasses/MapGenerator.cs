@@ -5,7 +5,7 @@ namespace PerilousSwamp.MapClasses;
 
 internal static class MapGenerator
 {
-    private static readonly Random Rnd = new();
+    public static readonly Random Rnd = new();
     public const int Edge = 1;
     public const int Free = 2;
     public const int Obstacle = 3;

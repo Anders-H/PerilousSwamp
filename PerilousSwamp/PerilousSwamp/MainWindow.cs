@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Threading;
 using System.Windows.Forms;
+using MrSwampMonster;
 using PerilousSwamp.MapClasses;
 
 namespace PerilousSwamp;
@@ -16,8 +17,9 @@ public partial class MainWindow : Form
     private int _mouseY;
     private string _currentDecorationImage;
     private readonly TextOutput _textOutput;
-    private Map _map;
-    private GameProperties _gameProperties;
+    private Map? _map;
+    private MonsterMap? _monsterMap;
+    private GameProperties? _gameProperties;
     private GuiState _guiState;
     private GameState _gameState;
 
@@ -39,6 +41,7 @@ public partial class MainWindow : Form
     {
         _gameState = GameState.PickDirection;
         _map = new Map();
+        _monsterMap = new MonsterMap();
         _gameProperties = new GameProperties();
     }
 
@@ -52,8 +55,8 @@ public partial class MainWindow : Form
         TypeWrite("A beautiful princess is held by an evil wizard. The king wouldn't mind if you could release her...");
         _currentDecorationImage = "evil_wizard.png";
         TypeWrite("");
-#endif
         TypeWrite("Should you have to leave early, typing \"out\" should get you out - permanently.");
+#endif
         _currentDecorationImage = "swamp.png";
         LockGui(false);
         Refresh();
@@ -173,6 +176,9 @@ public partial class MainWindow : Form
                 case GameState.PickDirection:
                     graphics.DrawImage(Properties.Resources.Compass, new Rectangle(214, 3, 110, 110));
                     break;
+                case GameState.RunFightBribe:
+                    graphics.DrawImage(Properties.Resources.fight_run_bribe, new Rectangle(214, 3, 110, 110));
+                    break;
             }
         }
 
@@ -181,6 +187,9 @@ public partial class MainWindow : Form
 
     private void DrawMap(int x, int y, Graphics g)
     {
+        if (_map == null || _gameProperties == null)
+            return;
+
         for (var visibleY = 0; visibleY < Map.ViewportSize; visibleY++)
         {
             for (var visibleX = 0; visibleX < Map.ViewportSize; visibleX++)
@@ -297,6 +306,9 @@ public partial class MainWindow : Form
 
     private void MovePlayer(int diffY, int diffX)
     {
+        if (_map == null)
+            return;
+
         var newX = _map.PlayerX + diffX;
         var newY = _map.PlayerY + diffY;
         var data = _map.Grid[newY, newX];
@@ -321,9 +333,42 @@ public partial class MainWindow : Form
             _map.PlayerY = newY;
             _map.UpdateViewport();
             Refresh();
-            _gameState = GameState.PickDirection;
-            _guiState = GuiState.WaitingForUserInput;
-            Refresh();
+
+            var monster = _monsterMap!.GetMonsterFromMapPosition(newX, newY);
+
+            if (monster != null)
+            {
+                if (monster.IsGone)
+                {
+                    TypeWrite("");
+                    TypeWrite($"Once there was a monster here, a {monster.MonsterName}. It is long gone now.");
+                    _gameState = GameState.PickDirection;
+                    _guiState = GuiState.WaitingForUserInput;
+                    Refresh();
+
+                }
+                else if (!monster.IsAlive)
+                {
+                    TypeWrite("");
+                    TypeWrite($"You are standing by the dead body of a monster. It was once a {monster.MonsterName}.");
+                    _gameState = GameState.PickDirection;
+                    _guiState = GuiState.WaitingForUserInput;
+                    Refresh();
+                }
+                else
+                {
+                    TypeWrite("");
+                    TypeWrite($"Your combat strength is {_gameProperties.PlayerCombatStrength}. A {monster.MonsterName} says hi.");
+                    TypeWrite("");
+                    TypeWrite($"A {monster.MonsterName}");
+                }
+            }
+            else
+            {
+                _gameState = GameState.PickDirection;
+                _guiState = GuiState.WaitingForUserInput;
+                Refresh();
+            }
         }
         else if (data == MapGenerator.Player)
         {
@@ -339,7 +384,7 @@ public partial class MainWindow : Form
         }
         else if (data == MapGenerator.Princess)
         {
-            if (_gameProperties.PrincessIsPickedUp)
+            if (_gameProperties!.PrincessIsPickedUp)
             {
                 _map.PlayerX = newX;
                 _map.PlayerY = newY;
@@ -364,7 +409,7 @@ public partial class MainWindow : Form
                 Refresh();
                 LockGui(true);
                 TypeWrite("");
-
+                
                 // A green, dirty wizard is guarding a fair princess.
                 // The wizard has his pet Bunyip with him, and his combat points come to 120.
 

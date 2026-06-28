@@ -73,6 +73,16 @@ namespace PerilousSwamp.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap fight_run_bribe {
+            get {
+                object obj = ResourceManager.GetObject("fight_run_bribe", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap gui_outline {
             get {
                 object obj = ResourceManager.GetObject("gui-outline", resourceCulture);

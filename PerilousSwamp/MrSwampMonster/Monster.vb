@@ -1,11 +1,15 @@
 ﻿Public Class Monster
 
-    Private Shared ReadOnly Rnd As New Random()
+    Public Shared ReadOnly Rnd As New Random()
     Public ReadOnly MonsterCombatStrength As Integer
     Public ReadOnly MonsterName As String
+    Public IsAlive As Boolean
+    Public IsGone As Boolean
 
     Public Sub New(monasterCombatStrength As Integer)
         MonsterCombatStrength = monasterCombatStrength
+        IsAlive = True
+        IsGone = False
         Dim monsterNameFirstParts As String() = {"Fiendish", "Green", "Lean", "Hungry", "Nasty", "Tough", "Horrible", "Dirty", "Vile", "Feral", "Grimy", "Sinister", "Savage"}
         Dim monsterNameLastParts As String() = {"Werewolf", "Phoenix", "Troll", "Goblin", "Ghoul", "Gorgon", "Dragon", "Orge", "Wizard", "Manticore", "Wraith", "Basilisk", "Harpy", "Minotaur"}
         Dim monsterFirstIndex = Rnd.Next(0, monsterNameFirstParts.Length)
