@@ -6,55 +6,17 @@
 
     Public Sub New(monasterCombatStrength As Integer)
         MonsterCombatStrength = monasterCombatStrength
-        Dim monsterFirstIndex = Rnd.Next(0, 8)
-        Dim monsterSecondIndex = Rnd.Next(0, 8)
+        Dim monsterNameFirstParts As String() = {"Fiendish", "Green", "Lean", "Hungry", "Nasty", "Tough", "Horrible", "Dirty", "Vile", "Feral", "Grimy", "Sinister", "Savage"}
+        Dim monsterNameLastParts As String() = {"Werewolf", "Phoenix", "Troll", "Goblin", "Ghoul", "Gorgon", "Dragon", "Orge", "Wizard", "Manticore", "Wraith", "Basilisk", "Harpy", "Minotaur"}
+        Dim monsterFirstIndex = Rnd.Next(0, monsterNameFirstParts.Length)
+        Dim monsterSecondIndex = Rnd.Next(0, monsterNameFirstParts.Length)
 
         While monsterSecondIndex = monsterFirstIndex
-            monsterSecondIndex = Rnd.Next(0, 8)
+            monsterSecondIndex = Rnd.Next(0, monsterNameLastParts.Length)
         End While
 
-        Dim monsterNameFirstPart = ""
-        Dim monsterNameSecondPart = ""
-
-        Select Case monsterFirstIndex
-            Case 0
-                monsterNameFirstPart = "Fiendish, "
-            Case 1
-                monsterNameFirstPart = "Green, "
-            Case 2
-                monsterNameFirstPart = "Lean, "
-            Case 3
-                monsterNameFirstPart = "Hungry, "
-            Case 4
-                monsterNameFirstPart = "Nasty, "
-            Case 5
-                monsterNameFirstPart = "Tough, "
-            Case 6
-                monsterNameFirstPart = "Horrible, "
-            Case 7
-                monsterNameFirstPart = "Dirty, "
-        End Select
-
-        Select Case monsterSecondIndex
-            Case 0
-                monsterNameSecondPart = "Fiendish "
-            Case 1
-                monsterNameSecondPart = "Green "
-            Case 2
-                monsterNameSecondPart = "Lean "
-            Case 3
-                monsterNameSecondPart = "Hungry "
-            Case 4
-                monsterNameSecondPart = "Nasty "
-            Case 5
-                monsterNameSecondPart = "Tough "
-            Case 6
-                monsterNameSecondPart = "Horrible "
-            Case 7
-                monsterNameSecondPart = "Dirty "
-        End Select
-
-
+        Dim monsterThirdIndex = Rnd.Next(0, monsterNameLastParts.Length)
+        MonsterName = String.Format("{0}, {1} {2}", monsterNameFirstParts(monsterFirstIndex), monsterNameFirstParts(monsterSecondIndex), monsterNameLastParts(monsterThirdIndex))
     End Sub
 
     Function ResolveCombat(playerStrength As Integer) As Integer
