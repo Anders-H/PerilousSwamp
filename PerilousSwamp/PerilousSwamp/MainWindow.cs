@@ -177,7 +177,7 @@ public partial class MainWindow : Form
                     graphics.DrawImage(Properties.Resources.Compass, new Rectangle(214, 3, 110, 110));
                     break;
                 case GameState.RunFightBribe:
-                    graphics.DrawImage(Properties.Resources.fight_run_bribe, new Rectangle(214, 3, 110, 110));
+                    graphics.DrawImage(Properties.Resources.fight_run_bribe, new Rectangle(225, -5, 86, 115));
                     break;
             }
         }
@@ -298,15 +298,55 @@ public partial class MainWindow : Form
                             break;
                     }
                     break;
+                case GameState.RunFightBribe:
+                    var clickPosition = new Rectangle(e.X, e.Y, 1, 1);
+                    var fightButton = new Rectangle(241, 9, 25, 16);
+                    var runButton = new Rectangle(241, 47, 25, 16);
+                    var bribeButton = new Rectangle(241, 86, 25, 16);
+
+                    if (fightButton.IntersectsWith(clickPosition))
+                    {
+                        TypeWrite("");
+                        TypeWrite("Fight!");
+                        Fight();
+                    }
+                    else if (runButton.IntersectsWith(clickPosition))
+                    {
+                        TypeWrite("");
+                        TypeWrite("Run!");
+                        Run();
+                    }
+                    else if (bribeButton.IntersectsWith(clickPosition))
+                    {
+                        TypeWrite("");
+                        TypeWrite("Bribe!");
+                        Bribe();
+                    }
+                    break;
             }
 
             LockGui(false);
         }
     }
 
+    private void Fight()
+    {
+
+    }
+
+    private void Run()
+    {
+
+    }
+
+    private void Bribe()
+    {
+
+    }
+
     private void MovePlayer(int diffY, int diffX)
     {
-        if (_map == null)
+        if (_map == null || _gameProperties == null)
             return;
 
         var newX = _map.PlayerX + diffX;
@@ -360,7 +400,10 @@ public partial class MainWindow : Form
                     TypeWrite("");
                     TypeWrite($"Your combat strength is {_gameProperties.PlayerCombatStrength}. A {monster.MonsterName} says hi.");
                     TypeWrite("");
-                    TypeWrite($"A {monster.MonsterName}");
+                    TypeWrite("Do you wish to fight, run, or bribe?");
+                    _gameState = GameState.RunFightBribe;
+                    _guiState = GuiState.WaitingForUserInput;
+                    Refresh();
                 }
             }
             else
