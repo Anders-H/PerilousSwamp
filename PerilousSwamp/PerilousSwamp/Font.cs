@@ -573,6 +573,16 @@ public class Font
     ".**..**.",
     "..****..",
     "........");
+            case '§': // Cursor symbol
+                return GetBitmap(c,
+    "********",
+    "********",
+    "********",
+    "********",
+    "********",
+    "********",
+    "********",
+    "********");
             default:
                 throw new ArgumentOutOfRangeException(c.ToString());
         }

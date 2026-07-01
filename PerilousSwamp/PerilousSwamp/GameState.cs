@@ -3,5 +3,6 @@
 public enum GameState
 {
     PickDirection,
-    RunFightBribe
+    RunFightBribe,
+    EnterCombatPoints
 }

@@ -8,11 +8,11 @@ namespace PerilousSwamp;
 
 public class TextOutput
 {
-    private readonly string[] _lines;
+    private readonly string?[] _lines;
 
     public TextOutput()
     {
-        _lines = new string[10];
+        _lines = new string?[10];
     }
 
     public void SetText(string text)

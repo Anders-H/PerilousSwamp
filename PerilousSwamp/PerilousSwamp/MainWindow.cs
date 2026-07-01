@@ -20,6 +20,7 @@ public partial class MainWindow : Form
     private Map? _map;
     private MonsterMap? _monsterMap;
     private GameProperties? _gameProperties;
+    private NumberInput? _numberInput;
     private GuiState _guiState;
     private GameState _gameState;
 
@@ -179,6 +180,9 @@ public partial class MainWindow : Form
                 case GameState.RunFightBribe:
                     graphics.DrawImage(Properties.Resources.fight_run_bribe, new Rectangle(225, -5, 86, 115));
                     break;
+                case GameState.EnterCombatPoints:
+                    _numberInput?.Draw(graphics, 8, 214);
+                    break;
             }
         }
 
@@ -323,6 +327,8 @@ public partial class MainWindow : Form
                         Bribe();
                     }
                     break;
+                case GameState.EnterCombatPoints:
+                    break;
             }
 
             LockGui(false);
@@ -331,7 +337,13 @@ public partial class MainWindow : Form
 
     private void Fight()
     {
-
+        TypeWrite("");
+        TypeWrite("How many combat points? Type a number and press Enter.");
+        TypeWrite("");
+        _numberInput = new NumberInput(Font);
+        _guiState = GuiState.WaitingForUserInput;
+        _gameState = GameState.EnterCombatPoints;
+        Refresh();
     }
 
     private void Run()
@@ -399,6 +411,7 @@ public partial class MainWindow : Form
                 {
                     TypeWrite("");
                     TypeWrite($"Your combat strength is {_gameProperties.PlayerCombatStrength}. A {monster.MonsterName} says hi.");
+                    // TODO Treasure
                     TypeWrite("");
                     TypeWrite("Do you wish to fight, run, or bribe?");
                     _gameState = GameState.RunFightBribe;
