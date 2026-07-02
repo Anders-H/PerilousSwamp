@@ -55,6 +55,10 @@
             this.imgListDekor.Images.SetKeyName(0, "princess.png");
             this.imgListDekor.Images.SetKeyName(1, "swamp.png");
             this.imgListDekor.Images.SetKeyName(2, "evil_wizard.png");
+            this.imgListDekor.Images.SetKeyName(3, "warewolf.png");
+            this.imgListDekor.Images.SetKeyName(4, "warewolf_attack.png");
+            this.imgListDekor.Images.SetKeyName(5, "phoenix.png");
+            this.imgListDekor.Images.SetKeyName(6, "phoenix_attack.png");
             // 
             // imgListMap
             // 
@@ -73,10 +77,13 @@
             this.ClientSize = new System.Drawing.Size(948, 590);
             this.Controls.Add(this.pictureBox1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.KeyPreview = true;
             this.MinimumSize = new System.Drawing.Size(160, 100);
             this.Name = "MainWindow";
             this.Text = "Perilous Swamp";
             this.Shown += new System.EventHandler(this.MainWindow_Shown);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainWindow_KeyDown);
+            this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.MainWindow_KeyPress);
             this.Resize += new System.EventHandler(this.MainWindow_Resize);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);

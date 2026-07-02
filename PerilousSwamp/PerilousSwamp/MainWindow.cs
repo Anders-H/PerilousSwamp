@@ -1,8 +1,8 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Threading;
 using System.Windows.Forms;
 using MrSwampMonster;
 using PerilousSwamp.MapClasses;
@@ -12,11 +12,13 @@ namespace PerilousSwamp;
 public partial class MainWindow : Form
 {
     public new static Font Font;
+    private const int MonsterImageOffset = 3;
     private Bitmap? _gameBitmap;
     private int _mouseX;
     private int _mouseY;
     private string _currentDecorationImage;
-    private readonly TextOutput _textOutput;
+    private Monster? _currentMonster;
+    private TextOutput? _textOutput;
     private Map? _map;
     private MonsterMap? _monsterMap;
     private GameProperties? _gameProperties;
@@ -32,8 +34,8 @@ public partial class MainWindow : Form
     public MainWindow()
     {
         _gameState = GameState.PickDirection;
+        _currentMonster = null;
         _currentDecorationImage = "swamp.png";
-        _textOutput = new TextOutput();
         NewGame();
         InitializeComponent();
     }
@@ -50,17 +52,15 @@ public partial class MainWindow : Form
     {
         LockGui(true);
 #if !DEBUG
-        TypeWrite("In this game, you find yourself in a swampy forest. Your task is to find your way to the edge, alive, and with as much treasure as possible.");
-        TypeWrite("");
+        _textOutput!.TypeWrite("In this game, you find yourself in a swampy forest. Your task is to find your way to the edge, alive, and with as much treasure as possible.", "");
         _currentDecorationImage = "princess.png";
-        TypeWrite("A beautiful princess is held by an evil wizard. The king wouldn't mind if you could release her...");
+        _textOutput!.TypeWrite("A beautiful princess is held by an evil wizard. The king wouldn't mind if you could release her...");
         _currentDecorationImage = "evil_wizard.png";
-        TypeWrite("");
-        TypeWrite("Should you have to leave early, typing \"out\" should get you out - permanently.");
+        _textOutput!.TypeWrite("", "Should you have to leave early, typing \"out\" should get you out - permanently.");
 #endif
         _currentDecorationImage = "swamp.png";
         LockGui(false);
-        Refresh();
+        pictureBox1.Invalidate();
     }
 
     private void MainWindow_Resize(object sender, EventArgs e)
@@ -88,46 +88,10 @@ public partial class MainWindow : Form
 
     private void MainWindow_Shown(object sender, EventArgs e)
     {
-        Refresh();
+        _textOutput = new TextOutput(pictureBox1);
+        pictureBox1.Invalidate();
         MainWindow_Resize(sender, e);
         PlayGameIntro();
-    }
-
-    private void TypeWrite(string text)
-    {
-        const int typeWriterSpeed = 30;
-
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            _textOutput.SetText("");
-            pictureBox1.Invalidate();
-            Application.DoEvents();
-            Thread.Sleep(typeWriterSpeed);
-            return;
-        }
-
-        var lines = _textOutput.WordWrap(text);
-        foreach (var line in lines)
-        {
-            _textOutput.SetText("");
-
-            if (string.IsNullOrWhiteSpace(line))
-            {
-                pictureBox1.Invalidate();
-                Application.DoEvents();
-                Thread.Sleep(typeWriterSpeed);
-            }
-
-            var l = line.Trim();
-
-            for (var i = 0; i < l.Length; i++)
-            {
-                _textOutput.AssignLastRow(l.Substring(0, i + 1));
-                pictureBox1.Invalidate();
-                Application.DoEvents();
-                Thread.Sleep(typeWriterSpeed);
-            }
-        }
     }
 
     private void LockGui(bool locked)
@@ -162,13 +126,36 @@ public partial class MainWindow : Form
         using var g = Graphics.FromImage(_gameBitmap);
         g.DrawImage(Properties.Resources.gui_outline, 0, 0, 320, 200);
         using var graphics = Graphics.FromImage(_gameBitmap);
-        var aktuellDekor = imgListDekor.Images[_currentDecorationImage];
 
-        if (aktuellDekor != null)
-            graphics.DrawImage(aktuellDekor, new Point(8, 8));
+        if (_currentMonster != null)
+        {
+            switch (_gameState)
+            {
+                case GameState.RunFightBribe:
+                    graphics.DrawImage(imgListDekor.Images[_currentMonster.AliveImageIndex + MonsterImageOffset], new Point(8, 8));
+                    break;
+                case GameState.EnterCombatPoints:
+                    graphics.DrawImage(imgListDekor.Images[_currentMonster.AttackImageIndex + MonsterImageOffset], new Point(8, 8));
+                    break;
+                default:
+                    var aktuellDekor = imgListDekor.Images[_currentDecorationImage];
+
+                    if (aktuellDekor != null)
+                        graphics.DrawImage(aktuellDekor, new Point(8, 8));
+
+                    break;
+            }
+        }
+        else
+        {
+            var aktuellDekor = imgListDekor.Images[_currentDecorationImage];
+
+            if (aktuellDekor != null)
+                graphics.DrawImage(aktuellDekor, new Point(8, 8));
+        }
 
         DrawMap(118, 8, graphics);
-        _textOutput.Draw(graphics);
+        _textOutput!.Draw(graphics);
 
         if (_guiState == GuiState.WaitingForUserInput)
         {
@@ -181,7 +168,7 @@ public partial class MainWindow : Form
                     graphics.DrawImage(Properties.Resources.fight_run_bribe, new Rectangle(225, -5, 86, 115));
                     break;
                 case GameState.EnterCombatPoints:
-                    _numberInput?.Draw(graphics, 8, 214);
+                    _numberInput?.Draw(graphics, 8, 186);
                     break;
             }
         }
@@ -261,69 +248,57 @@ public partial class MainWindow : Form
                         case CompassDirection.NoOperation:
                             break;
                         case CompassDirection.North:
-                            TypeWrite("");
-                            TypeWrite("North");
+                            _textOutput!.TypeWrite("", "North");
                             MovePlayer(-1, 0);
                             break;
                         case CompassDirection.Ne:
-                            TypeWrite("");
-                            TypeWrite("Northeast");
+                            _textOutput!.TypeWrite("", "Northeast");
                             MovePlayer(-1, 1);
                             break;
                         case CompassDirection.East:
-                            TypeWrite("");
-                            TypeWrite("East");
+                            _textOutput!.TypeWrite("", "East");
                             MovePlayer(0, 1);
                             break;
                         case CompassDirection.Se:
-                            TypeWrite("");
-                            TypeWrite("Southeast");
+                            _textOutput!.TypeWrite("", "Southeast");
                             MovePlayer(1, 1);
                             break;
                         case CompassDirection.South:
-                            TypeWrite("");
-                            TypeWrite("South");
+                            _textOutput!.TypeWrite("", "South");
                             MovePlayer(1, 0);
                             break;
                         case CompassDirection.Sw:
-                            TypeWrite("");
-                            TypeWrite("Southwest");
+                            _textOutput!.TypeWrite("", "Southwest");
                             MovePlayer(1, -1);
                             break;
                         case CompassDirection.West:
-                            TypeWrite("");
-                            TypeWrite("West");
+                            _textOutput!.TypeWrite("", "West");
                             MovePlayer(0, -1);
                             break;
                         case CompassDirection.Nw:
-                            TypeWrite("");
-                            TypeWrite("Northwest");
+                            _textOutput!.TypeWrite("", "Northwest");
                             MovePlayer(-1, -1);
                             break;
                     }
                     break;
                 case GameState.RunFightBribe:
-                    var clickPosition = new Rectangle(e.X, e.Y, 1, 1);
                     var fightButton = new Rectangle(241, 9, 25, 16);
                     var runButton = new Rectangle(241, 47, 25, 16);
                     var bribeButton = new Rectangle(241, 86, 25, 16);
 
-                    if (fightButton.IntersectsWith(clickPosition))
+                    if (fightButton.HitTest(_mouseX, _mouseX))
                     {
-                        TypeWrite("");
-                        TypeWrite("Fight!");
+                        _textOutput!.TypeWrite("", "Fight!");
                         Fight();
                     }
-                    else if (runButton.IntersectsWith(clickPosition))
+                    else if (runButton.HitTest(_mouseX, _mouseX))
                     {
-                        TypeWrite("");
-                        TypeWrite("Run!");
+                        _textOutput!.TypeWrite("", "Run!");
                         Run();
                     }
-                    else if (bribeButton.IntersectsWith(clickPosition))
+                    else if (bribeButton.HitTest(_mouseX, _mouseX))
                     {
-                        TypeWrite("");
-                        TypeWrite("Bribe!");
+                        _textOutput!.TypeWrite("", "Bribe!");
                         Bribe();
                     }
                     break;
@@ -337,13 +312,11 @@ public partial class MainWindow : Form
 
     private void Fight()
     {
-        TypeWrite("");
-        TypeWrite("How many combat points? Type a number and press Enter.");
-        TypeWrite("");
+        _textOutput!.TypeWrite("", "How many combat points? Type a number and press Enter.", "");
         _numberInput = new NumberInput(Font);
         _guiState = GuiState.WaitingForUserInput;
         _gameState = GameState.EnterCombatPoints;
-        Refresh();
+        pictureBox1.Refresh();
     }
 
     private void Run()
@@ -372,19 +345,18 @@ public partial class MainWindow : Form
         else if (data == MapGenerator.Obstacle)
         {
             LockGui(true);
-            TypeWrite("");
-            TypeWrite("Too wet that way, clot!");
+             _textOutput!.TypeWrite("", "Too wet that way, clot!");
             LockGui(false);
             _gameState = GameState.PickDirection;
             _guiState = GuiState.WaitingForUserInput;
-            Refresh();
+            pictureBox1.Invalidate();
         }
         else if (data == MapGenerator.Free)
         {
             _map.PlayerX = newX;
             _map.PlayerY = newY;
             _map.UpdateViewport();
-            Refresh();
+            pictureBox1.Invalidate();
 
             var monster = _monsterMap!.GetMonsterFromMapPosition(newX, newY);
 
@@ -392,38 +364,34 @@ public partial class MainWindow : Form
             {
                 if (monster.IsGone)
                 {
-                    TypeWrite("");
-                    TypeWrite($"Once there was a monster here, a {monster.MonsterName}. It is long gone now.");
+                    _textOutput!.TypeWrite("", $"Once there was a monster here, a {monster.MonsterName}. It is long gone now.");
                     _gameState = GameState.PickDirection;
                     _guiState = GuiState.WaitingForUserInput;
-                    Refresh();
-
+                    pictureBox1.Invalidate();
                 }
                 else if (!monster.IsAlive)
                 {
-                    TypeWrite("");
-                    TypeWrite($"You are standing by the dead body of a monster. It was once a {monster.MonsterName}.");
+                    _textOutput!.TypeWrite("", $"You are standing by the dead body of a monster. It was once a {monster.MonsterName}.");
                     _gameState = GameState.PickDirection;
                     _guiState = GuiState.WaitingForUserInput;
-                    Refresh();
+                    pictureBox1.Invalidate();
                 }
                 else
                 {
-                    TypeWrite("");
-                    TypeWrite($"Your combat strength is {_gameProperties.PlayerCombatStrength}. A {monster.MonsterName} says hi.");
+                    _currentMonster = monster;
+                    _textOutput!.TypeWrite("", $"A {monster.MonsterName} is guarding SOME SHIT. His combat points come to {monster.MonsterCombatStrength}.");
                     // TODO Treasure
-                    TypeWrite("");
-                    TypeWrite("Do you wish to fight, run, or bribe?");
+                    _textOutput!.TypeWrite("", "Do you wish to fight, run, or bribe?");
                     _gameState = GameState.RunFightBribe;
                     _guiState = GuiState.WaitingForUserInput;
-                    Refresh();
+                    pictureBox1.Invalidate();
                 }
             }
             else
             {
                 _gameState = GameState.PickDirection;
                 _guiState = GuiState.WaitingForUserInput;
-                Refresh();
+                pictureBox1.Invalidate();
             }
         }
         else if (data == MapGenerator.Player)
@@ -431,12 +399,11 @@ public partial class MainWindow : Form
             _map.PlayerX = newX;
             _map.PlayerY = newY;
             _map.UpdateViewport();
-            TypeWrite("");
-            TypeWrite("This is where you found yourself when the game started.");
-            Refresh();
+            _textOutput!.TypeWrite("", "This is where you found yourself when the game started.");
+            pictureBox1.Invalidate();
             _gameState = GameState.PickDirection;
             _guiState = GuiState.WaitingForUserInput;
-            Refresh();
+            pictureBox1.Invalidate();
         }
         else if (data == MapGenerator.Princess)
         {
@@ -445,13 +412,12 @@ public partial class MainWindow : Form
                 _map.PlayerX = newX;
                 _map.PlayerY = newY;
                 _map.UpdateViewport();
-                Refresh();
+                pictureBox1.Invalidate();
                 _gameState = GameState.PickDirection;
                 _guiState = GuiState.WaitingForUserInput;
-                Refresh();
+                pictureBox1.Invalidate();
                 LockGui(true);
-                TypeWrite("");
-                TypeWrite("You have been here before. You picked up the princess here, and she is happy to be rescued by you! Bring her on your journey ahead!");
+                _textOutput!.TypeWrite("", "You have been here before. You picked up the princess here, and she is happy to be rescued by you! Bring her on your journey ahead!");
                 LockGui(false);
             }
             else
@@ -459,12 +425,11 @@ public partial class MainWindow : Form
                 _map.PlayerX = newX;
                 _map.PlayerY = newY;
                 _map.UpdateViewport();
-                Refresh();
+                pictureBox1.Invalidate();
                 _gameState = GameState.PickDirection;
                 _guiState = GuiState.WaitingForUserInput;
-                Refresh();
+                pictureBox1.Invalidate();
                 LockGui(true);
-                TypeWrite("");
                 
                 // A green, dirty wizard is guarding a fair princess.
                 // The wizard has his pet Bunyip with him, and his combat points come to 120.
@@ -473,8 +438,7 @@ public partial class MainWindow : Form
 
                 //--- Sucess:
                 _gameProperties.PrincessIsPickedUp = true;
-                TypeWrite("");
-                TypeWrite("You sure smashed that monster. Your ill-gotten gains now come to XXXXX points. The princess comes with you.");
+                _textOutput!.TypeWrite("", "You sure smashed that monster. Your ill-gotten gains now come to XXXXX points. The princess comes with you.");
 
                 //--- Failure:
 
@@ -484,7 +448,63 @@ public partial class MainWindow : Form
                 // Try again? You could get lucky!
 
                 LockGui(false);
-                Refresh();
+                pictureBox1.Invalidate();
+            }
+        }
+    }
+
+    private void MainWindow_KeyPress(object sender, KeyPressEventArgs e)
+    {
+        if (_guiState == GuiState.WaitingForUserInput)
+        {
+            if (_gameState == GameState.EnterCombatPoints)
+            {
+                if (_numberInput == null)
+                    return;
+
+                switch (e.KeyChar)
+                {
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9':
+                        _numberInput.EnterDigit(e.KeyChar);
+                        pictureBox1.Refresh();
+                        break;
+                }
+            }
+        }
+    }
+
+    private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (_guiState == GuiState.WaitingForUserInput)
+        {
+            if (_gameState == GameState.EnterCombatPoints)
+            {
+                if (_numberInput == null)
+                    return;
+
+                switch (e.KeyCode)
+                {
+                    case Keys.Back:
+                        _numberInput.Backspace();
+                        pictureBox1.Refresh();
+                        break;
+                    case Keys.Enter:
+                        var combatPoints = _numberInput.GetNumber();
+                        _numberInput.Clear();
+                        _gameState = GameState.PickDirection;
+                        _guiState = GuiState.WaitingForUserInput;
+                        _textOutput!.TypeWrite($"You entered {combatPoints} combat points.");
+                        break;
+                }
             }
         }
     }

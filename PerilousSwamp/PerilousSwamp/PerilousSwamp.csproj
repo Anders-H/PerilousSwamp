@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="Compass.cs" />
     <Compile Include="CompassDirection.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="FastBitmapcs.cs" />
     <Compile Include="Font.cs" />
     <Compile Include="GameProperties.cs" />

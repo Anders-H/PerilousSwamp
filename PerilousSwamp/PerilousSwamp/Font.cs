@@ -482,7 +482,6 @@ public class Font
     ".**..**.",
     "..****..",
     "........");
-                break;
             case '1':
                 return GetBitmap(c,
     "...**...",

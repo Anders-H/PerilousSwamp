@@ -6,14 +6,14 @@
     Public IsAlive As Boolean
     Public IsGone As Boolean
     Public AliveImageIndex As Integer
-    Public DeadImageIndex As Integer
+    Public AttackImageIndex As Integer
 
-    Public Sub New(monasterCombatStrength As Integer)
-        MonsterCombatStrength = monasterCombatStrength
+    Public Sub New(monsterCombatStrength As Integer)
+        Me.MonsterCombatStrength = monsterCombatStrength
         IsAlive = True
         IsGone = False
         Dim monsterNameFirstParts As String() = {"Fiendish", "Green", "Lean", "Hungry", "Nasty", "Tough", "Horrible", "Dirty", "Vile", "Feral", "Grimy", "Sinister", "Savage"}
-        Dim monsterNameLastParts As String() = {"Werewolf", "Phoenix", "Troll", "Goblin", "Ghoul", "Gorgon", "Dragon", "Orge", "Wizard", "Manticore", "Wraith", "Basilisk", "Harpy", "Minotaur"}
+        Dim monsterNameLastParts As String() = {"Werewolf", "Phoenix"} ', "Troll", "Goblin", "Ghoul", "Gorgon", "Dragon", "Orge", "Wizard", "Manticore", "Wraith", "Basilisk", "Harpy", "Minotaur"}
         Dim monsterFirstIndex = Rnd.Next(0, monsterNameFirstParts.Length)
         Dim monsterSecondIndex = Rnd.Next(0, monsterNameFirstParts.Length)
 
@@ -24,7 +24,7 @@
         Dim monsterThirdIndex = Rnd.Next(0, monsterNameLastParts.Length)
         MonsterName = String.Format("{0}, {1} {2}", monsterNameFirstParts(monsterFirstIndex), monsterNameFirstParts(monsterSecondIndex), monsterNameLastParts(monsterThirdIndex))
         AliveImageIndex = monsterThirdIndex * 2
-        DeadImageIndex = AliveImageIndex + 1
+        AttackImageIndex = AliveImageIndex + 1
     End Sub
 
     Function ResolveCombat(playerStrength As Integer) As Integer
@@ -41,18 +41,6 @@
         End If
 
         Return result
-    End Function
-
-    Public Function GetImageIndex() As Integer
-        If (IsGone) Then
-            Return -1
-        End If
-
-        If IsAlive Then
-            Return AliveImageIndex
-        Else
-            Return DeadImageIndex
-        End If
     End Function
 
 End Class

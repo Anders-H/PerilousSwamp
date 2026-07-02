@@ -3,16 +3,70 @@ using System;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Windows.Forms;
 
 namespace PerilousSwamp;
 
 public class TextOutput
 {
     private readonly string?[] _lines;
+    private readonly PictureBox _pictureBox;
 
-    public TextOutput()
+    public TextOutput(PictureBox pictureBox)
     {
         _lines = new string?[10];
+        _pictureBox = pictureBox;
+    }
+
+    public void TypeWrite(string text1, string text2)
+    {
+        TypeWrite(text1);
+        TypeWrite(text2);
+    }
+    
+    public void TypeWrite(string text1, string text2, string text3)
+    {
+        TypeWrite(text1);
+        TypeWrite(text2);
+        TypeWrite(text3);
+    }
+
+    public void TypeWrite(string text)
+    {
+        const int typeWriterSpeed = 30;
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            SetText("");
+            _pictureBox.Invalidate();
+            Application.DoEvents();
+            Thread.Sleep(typeWriterSpeed);
+            return;
+        }
+
+        var lines = WordWrap(text);
+        foreach (var line in lines)
+        {
+            SetText("");
+
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                _pictureBox.Invalidate();
+                Application.DoEvents();
+                Thread.Sleep(typeWriterSpeed);
+            }
+
+            var l = line.Trim();
+
+            for (var i = 0; i < l.Length; i++)
+            {
+                AssignLastRow(l.Substring(0, i + 1));
+                _pictureBox.Invalidate();
+                Application.DoEvents();
+                Thread.Sleep(typeWriterSpeed);
+            }
+        }
     }
 
     public void SetText(string text)
