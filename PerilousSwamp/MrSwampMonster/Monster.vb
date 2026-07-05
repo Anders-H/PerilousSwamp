@@ -3,6 +3,7 @@
     Public Shared ReadOnly Rnd As New Random()
     Public ReadOnly MonsterCombatStrength As Integer
     Public ReadOnly MonsterName As String
+    Public ReadOnly Treasure As Treasure
     Public IsAlive As Boolean
     Public IsGone As Boolean
     Public AliveImageIndex As Integer
@@ -13,7 +14,7 @@
         IsAlive = True
         IsGone = False
         Dim monsterNameFirstParts As String() = {"Fiendish", "Green", "Lean", "Hungry", "Nasty", "Tough", "Horrible", "Dirty", "Vile", "Feral", "Grimy", "Sinister", "Savage"}
-        Dim monsterNameLastParts As String() = {"Werewolf", "Phoenix"} ', "Troll", "Goblin", "Ghoul", "Gorgon", "Dragon", "Orge", "Wizard", "Manticore", "Wraith", "Basilisk", "Harpy", "Minotaur"}
+        Dim monsterNameLastParts As String() = {"Werewolf", "Phoenix"} ', "Bunyip", "Troll", "Goblin", "Ghoul", "Gorgon", "Dragon", "Orge", "Wizard", "Manticore", "Wraith", "Basilisk", "Harpy", "Minotaur"}
         Dim monsterFirstIndex = Rnd.Next(0, monsterNameFirstParts.Length)
         Dim monsterSecondIndex = Rnd.Next(0, monsterNameFirstParts.Length)
 
@@ -25,10 +26,11 @@
         MonsterName = String.Format("{0}, {1} {2}", monsterNameFirstParts(monsterFirstIndex), monsterNameFirstParts(monsterSecondIndex), monsterNameLastParts(monsterThirdIndex))
         AliveImageIndex = monsterThirdIndex * 2
         AttackImageIndex = AliveImageIndex + 1
+        Treasure = New Treasure()
     End Sub
 
-    Function ResolveCombat(playerStrength As Integer) As Integer
-        Dim baseDifference As Integer = playerStrength - MonsterCombatStrength
+    Function ResolveCombat(playerCombatPoints As Integer) As Integer
+        Dim baseDifference As Integer = playerCombatPoints - MonsterCombatStrength
         Dim randomFactor As Integer = Rnd.Next(-50, 51)
         Dim result As Integer = baseDifference + randomFactor
 

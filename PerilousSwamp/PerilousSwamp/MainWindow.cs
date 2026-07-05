@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -12,6 +11,7 @@ namespace PerilousSwamp;
 public partial class MainWindow : Form
 {
     public new static Font Font;
+    private bool _isInFight;
     private const int MonsterImageOffset = 3;
     private Bitmap? _gameBitmap;
     private int _mouseX;
@@ -33,6 +33,7 @@ public partial class MainWindow : Form
 
     public MainWindow()
     {
+        _isInFight = false;
         _gameState = GameState.PickDirection;
         _currentMonster = null;
         _currentDecorationImage = "swamp.png";
@@ -129,22 +130,11 @@ public partial class MainWindow : Form
 
         if (_currentMonster != null)
         {
-            switch (_gameState)
-            {
-                case GameState.RunFightBribe:
-                    graphics.DrawImage(imgListDekor.Images[_currentMonster.AliveImageIndex + MonsterImageOffset], new Point(8, 8));
-                    break;
-                case GameState.EnterCombatPoints:
-                    graphics.DrawImage(imgListDekor.Images[_currentMonster.AttackImageIndex + MonsterImageOffset], new Point(8, 8));
-                    break;
-                default:
-                    var aktuellDekor = imgListDekor.Images[_currentDecorationImage];
+            var img = _isInFight
+                ? imgListDekor.Images[_currentMonster.AttackImageIndex + MonsterImageOffset]
+                : imgListDekor.Images[_currentMonster.AliveImageIndex + MonsterImageOffset];
 
-                    if (aktuellDekor != null)
-                        graphics.DrawImage(aktuellDekor, new Point(8, 8));
-
-                    break;
-            }
+            graphics.DrawImage(img, new Point(8, 8));
         }
         else
         {
@@ -288,7 +278,6 @@ public partial class MainWindow : Form
 
                     if (fightButton.HitTest(_mouseX, _mouseX))
                     {
-                        _textOutput!.TypeWrite("", "Fight!");
                         Fight();
                     }
                     else if (runButton.HitTest(_mouseX, _mouseX))
@@ -312,10 +301,44 @@ public partial class MainWindow : Form
 
     private void Fight()
     {
-        _textOutput!.TypeWrite("", "How many combat points? Type a number and press Enter.", "");
+        if (_currentMonster == null || _gameProperties == null)
+            throw new SystemException("No current monster to fight or no game properties.");
+
+        _textOutput!.TypeWrite("", "Fight! How many combat points? Type a number and press Enter.", "");
+        _isInFight = true;
+        pictureBox1.Invalidate();
         _numberInput = new NumberInput(Font);
-        _guiState = GuiState.WaitingForUserInput;
         _gameState = GameState.EnterCombatPoints;
+        _guiState = GuiState.WaitingForUserInput;
+    }
+
+    private void FightContinues()
+    {
+        if (_currentMonster == null || _numberInput == null || _gameProperties == null)
+            throw new SystemException("No current monster to fight or no number input.");
+
+        var playerCombatPoints = _numberInput.GetNumber();
+        var result = _currentMonster.ResolveCombat(playerCombatPoints);
+        _isInFight = false;
+        var monsterCombatStrength = _currentMonster.MonsterCombatStrength;
+
+        if (result > 0)
+        {
+            var addPoints = result / 2;
+            addPoints += monsterCombatStrength / 20;
+            addPoints += MapGenerator.Rnd.Next(0, 15);
+            _gameProperties.PlayerCombatStrength += addPoints;
+            _textOutput!.TypeWrite("", "You sure smashed that monster!");
+            _currentMonster = null;
+            pictureBox1.Invalidate();
+            _textOutput!.TypeWrite("", $"Your ill-gotten gains now come to {addPoints} points.");
+        }
+        else
+        {
+            _currentMonster = null;
+            _textOutput!.TypeWrite("", "You have been defeated by the monster!");
+        }
+
         pictureBox1.Refresh();
     }
 
@@ -331,7 +354,7 @@ public partial class MainWindow : Form
 
     private void MovePlayer(int diffY, int diffX)
     {
-        if (_map == null || _gameProperties == null)
+        if (_map == null || _gameProperties == null || _textOutput == null || _monsterMap == null)
             return;
 
         var newX = _map.PlayerX + diffX;
@@ -345,7 +368,7 @@ public partial class MainWindow : Form
         else if (data == MapGenerator.Obstacle)
         {
             LockGui(true);
-             _textOutput!.TypeWrite("", "Too wet that way, clot!");
+             _textOutput.TypeWrite("", "Too wet that way, clot!");
             LockGui(false);
             _gameState = GameState.PickDirection;
             _guiState = GuiState.WaitingForUserInput;
@@ -358,30 +381,32 @@ public partial class MainWindow : Form
             _map.UpdateViewport();
             pictureBox1.Invalidate();
 
-            var monster = _monsterMap!.GetMonsterFromMapPosition(newX, newY);
+            var monster = _monsterMap.GetMonsterFromMapPosition(newX, newY);
 
             if (monster != null)
             {
                 if (monster.IsGone)
                 {
-                    _textOutput!.TypeWrite("", $"Once there was a monster here, a {monster.MonsterName}. It is long gone now.");
+                    _textOutput.TypeWrite("", $"Once there was a monster here, a {monster.MonsterName}. It is long gone now.");
                     _gameState = GameState.PickDirection;
                     _guiState = GuiState.WaitingForUserInput;
                     pictureBox1.Invalidate();
                 }
                 else if (!monster.IsAlive)
                 {
-                    _textOutput!.TypeWrite("", $"You are standing by the dead body of a monster. It was once a {monster.MonsterName}.");
+                    _textOutput.TypeWrite("", $"You are standing by the dead body of a monster. It was once a {monster.MonsterName}.");
                     _gameState = GameState.PickDirection;
                     _guiState = GuiState.WaitingForUserInput;
                     pictureBox1.Invalidate();
                 }
                 else
                 {
+                    _textOutput.TypeWrite("", $"Your combat strength is {_gameProperties.PlayerCombatStrength}.");
                     _currentMonster = monster;
-                    _textOutput!.TypeWrite("", $"A {monster.MonsterName} is guarding SOME SHIT. His combat points come to {monster.MonsterCombatStrength}.");
-                    // TODO Treasure
-                    _textOutput!.TypeWrite("", "Do you wish to fight, run, or bribe?");
+                    _isInFight = false;
+                    pictureBox1.Invalidate();
+                    _textOutput.TypeWrite("", $"A {monster.MonsterName} is guarding {monster.Treasure.TreasureName}. His combat points come to {monster.MonsterCombatStrength}.");
+                    _textOutput.TypeWrite("Do you wish to fight, run, or bribe?");
                     _gameState = GameState.RunFightBribe;
                     _guiState = GuiState.WaitingForUserInput;
                     pictureBox1.Invalidate();
@@ -503,6 +528,7 @@ public partial class MainWindow : Form
                         _gameState = GameState.PickDirection;
                         _guiState = GuiState.WaitingForUserInput;
                         _textOutput!.TypeWrite($"You entered {combatPoints} combat points.");
+                        FightContinues();
                         break;
                 }
             }

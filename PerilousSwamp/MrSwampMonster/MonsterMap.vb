@@ -14,8 +14,9 @@
             Return monster
         End If
 
-        Dim strength = Monster.Rnd.Next(0, 25)
-        strength *= 3 + 20
+        Dim strength = Monster.Rnd.Next(1, 15)
+        strength *= 2
+        strength += Monster.Rnd.Next(0, 15)
         monster = New Monster(strength)
         _monsters.Add(locationString, monster)
         Return monster
