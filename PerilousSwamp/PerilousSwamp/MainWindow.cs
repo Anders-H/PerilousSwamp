@@ -51,14 +51,18 @@ public partial class MainWindow : Form
 
     private void PlayGameIntro()
     {
+        if (_textOutput == null)
+            throw new SystemException("Text output not initialized.");
+
         LockGui(true);
-#if !DEBUG
-        _textOutput!.TypeWrite("In this game, you find yourself in a swampy forest. Your task is to find your way to the edge, alive, and with as much treasure as possible.", "");
+//#if !DEBUG
+        _textOutput.TypeWrite("In this game, you find yourself in a swampy forest. Your task is to find your way to the edge, alive, and with as much treasure as possible.", "");
         _currentDecorationImage = "princess.png";
-        _textOutput!.TypeWrite("A beautiful princess is held by an evil wizard. The king wouldn't mind if you could release her...");
+        _textOutput.TypeWrite("A beautiful princess is held by an evil wizard. The king wouldn't mind if you could release her...");
         _currentDecorationImage = "evil_wizard.png";
-        _textOutput!.TypeWrite("", "Should you have to leave early, typing \"out\" should get you out - permanently.");
-#endif
+        _textOutput.TypeWrite("", "Should you have to leave early, typing \"out\" should get you out - permanently.");
+//#endif
+        _textOutput.TypeWrite("", "Which way?");
         _currentDecorationImage = "swamp.png";
         LockGui(false);
         pictureBox1.Invalidate();
@@ -314,10 +318,15 @@ public partial class MainWindow : Form
 
     private void FightContinues()
     {
-        if (_currentMonster == null || _numberInput == null || _gameProperties == null)
+        if (_currentMonster == null || _numberInput == null || _gameProperties == null || _textOutput == null)
             throw new SystemException("No current monster to fight or no number input.");
 
         var playerCombatPoints = _numberInput.GetNumber();
+        _textOutput.TypeWrite($"You entered {playerCombatPoints} combat points.");
+        _numberInput.Clear();
+        
+        // TODO: Check input and substract from player.
+
         var result = _currentMonster.ResolveCombat(playerCombatPoints);
         _isInFight = false;
         var monsterCombatStrength = _currentMonster.MonsterCombatStrength;
@@ -328,15 +337,20 @@ public partial class MainWindow : Form
             addPoints += monsterCombatStrength / 20;
             addPoints += MapGenerator.Rnd.Next(0, 15);
             _gameProperties.PlayerCombatStrength += addPoints;
-            _textOutput!.TypeWrite("", "You sure smashed that monster!");
+            _textOutput.TypeWrite("", "You sure smashed that monster!");
+            _gameProperties.Treasures.Add(_currentMonster.Treasure);
             _currentMonster = null;
             pictureBox1.Invalidate();
-            _textOutput!.TypeWrite("", $"Your ill-gotten gains now come to {addPoints} points.");
+            _textOutput.TypeWrite("", $"Your ill-gotten gains now come to {addPoints} points.");
+            _textOutput.TypeWrite("", "Which way now?");
+            _gameState = GameState.PickDirection;
+            _guiState = GuiState.WaitingForUserInput;
+            pictureBox1.Invalidate();
         }
         else
         {
             _currentMonster = null;
-            _textOutput!.TypeWrite("", "You have been defeated by the monster!");
+            _textOutput.TypeWrite("", "You have been defeated by the monster!");
         }
 
         pictureBox1.Refresh();
@@ -389,15 +403,11 @@ public partial class MainWindow : Form
                 {
                     _textOutput.TypeWrite("", $"Once there was a monster here, a {monster.MonsterName}. It is long gone now.");
                     _gameState = GameState.PickDirection;
-                    _guiState = GuiState.WaitingForUserInput;
-                    pictureBox1.Invalidate();
                 }
                 else if (!monster.IsAlive)
                 {
                     _textOutput.TypeWrite("", $"You are standing by the dead body of a monster. It was once a {monster.MonsterName}.");
                     _gameState = GameState.PickDirection;
-                    _guiState = GuiState.WaitingForUserInput;
-                    pictureBox1.Invalidate();
                 }
                 else
                 {
@@ -405,19 +415,17 @@ public partial class MainWindow : Form
                     _currentMonster = monster;
                     _isInFight = false;
                     pictureBox1.Invalidate();
-                    _textOutput.TypeWrite("", $"A {monster.MonsterName} is guarding {monster.Treasure.TreasureName}. His combat points come to {monster.MonsterCombatStrength}.");
-                    _textOutput.TypeWrite("Do you wish to fight, run, or bribe?");
+                    _textOutput.TypeWrite("", $"A {monster.MonsterName} is guarding {monster.Treasure.TreasureName}. His combat points come to {monster.MonsterCombatStrength}. Do you wish to fight, run, or bribe?");
                     _gameState = GameState.RunFightBribe;
-                    _guiState = GuiState.WaitingForUserInput;
-                    pictureBox1.Invalidate();
                 }
             }
             else
             {
                 _gameState = GameState.PickDirection;
-                _guiState = GuiState.WaitingForUserInput;
-                pictureBox1.Invalidate();
             }
+
+            _guiState = GuiState.WaitingForUserInput;
+            pictureBox1.Invalidate();
         }
         else if (data == MapGenerator.Player)
         {
@@ -523,11 +531,7 @@ public partial class MainWindow : Form
                         pictureBox1.Refresh();
                         break;
                     case Keys.Enter:
-                        var combatPoints = _numberInput.GetNumber();
-                        _numberInput.Clear();
-                        _gameState = GameState.PickDirection;
-                        _guiState = GuiState.WaitingForUserInput;
-                        _textOutput!.TypeWrite($"You entered {combatPoints} combat points.");
+                        _guiState = GuiState.DeliveringOutput;
                         FightContinues();
                         break;
                 }

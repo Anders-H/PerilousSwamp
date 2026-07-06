@@ -31,7 +31,15 @@
 
     Function ResolveCombat(playerCombatPoints As Integer) As Integer
         Dim baseDifference As Integer = playerCombatPoints - MonsterCombatStrength
-        Dim randomFactor As Integer = Rnd.Next(-50, 51)
+        Dim randomRange = CType(Math.Round(Math.Abs(baseDifference) * 1.4), Integer)
+
+        If randomRange < 2 Then
+            randomRange = 2
+        ElseIf randomRange > 60 Then
+            randomRange = 60
+        End If
+
+        Dim randomFactor As Integer = Rnd.Next(-randomRange, randomRange + 1)
         Dim result As Integer = baseDifference + randomFactor
 
         If result = 0 Then
@@ -40,6 +48,12 @@
             Else
                 result = -1
             End If
+        End If
+
+        If result > 30 Then
+            result /= 3
+        ElseIf result > 15 Then
+            result /= 2
         End If
 
         Return result
