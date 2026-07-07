@@ -55,13 +55,13 @@ public partial class MainWindow : Form
             throw new SystemException("Text output not initialized.");
 
         LockGui(true);
-//#if !DEBUG
+#if !DEBUG
         _textOutput.TypeWrite("In this game, you find yourself in a swampy forest. Your task is to find your way to the edge, alive, and with as much treasure as possible.", "");
         _currentDecorationImage = "princess.png";
         _textOutput.TypeWrite("A beautiful princess is held by an evil wizard. The king wouldn't mind if you could release her...");
         _currentDecorationImage = "evil_wizard.png";
         _textOutput.TypeWrite("", "Should you have to leave early, typing \"out\" should get you out - permanently.");
-//#endif
+#endif
         _textOutput.TypeWrite("", "Which way?");
         _currentDecorationImage = "swamp.png";
         LockGui(false);
@@ -230,85 +230,90 @@ public partial class MainWindow : Form
 
     private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
     {
-        if (_guiState == GuiState.WaitingForUserInput)
+        if (_textOutput == null)
+            throw new SystemException("This is broken.");
+
+        if (_guiState != GuiState.WaitingForUserInput)
+            return;
+
+        LockGui(true);
+
+        switch (_gameState)
         {
-            LockGui(true);
+            case GameState.PickDirection:
+                switch (Compass.GetDirectionFromCoordinate(_mouseX, _mouseY))
+                {
+                    case CompassDirection.NoOperation:
+                        break;
+                    case CompassDirection.North:
+                        _textOutput.AssignLastRow("Which way now? North");
+                        MovePlayer(-1, 0);
+                        break;
+                    case CompassDirection.Ne:
+                        _textOutput.AssignLastRow("Which way now? Northeast");
+                        MovePlayer(-1, 1);
+                        break;
+                    case CompassDirection.East:
+                        _textOutput.AssignLastRow("Which way now? East");
+                        MovePlayer(0, 1);
+                        break;
+                    case CompassDirection.Se:
+                        _textOutput.AssignLastRow("Which way now? Southeast");
+                        MovePlayer(1, 1);
+                        break;
+                    case CompassDirection.South:
+                        _textOutput.AssignLastRow("Which way now? South");
+                        MovePlayer(1, 0);
+                        break;
+                    case CompassDirection.Sw:
+                        _textOutput.AssignLastRow("Which way now? Southwest");
+                        MovePlayer(1, -1);
+                        break;
+                    case CompassDirection.West:
+                        _textOutput.AssignLastRow("Which way now? West");
+                        MovePlayer(0, -1);
+                        break;
+                    case CompassDirection.Nw:
+                        _textOutput.AssignLastRow("Which way now? Northwest");
+                        MovePlayer(-1, -1);
+                        break;
+                }
+                break;
+            case GameState.RunFightBribe:
+                var fightButton = new Rectangle(241, 9, 25, 16);
+                var runButton = new Rectangle(241, 47, 25, 16);
+                var bribeButton = new Rectangle(241, 86, 25, 16);
 
-            switch (_gameState)
-            {
-                case GameState.PickDirection:
-                    switch (Compass.GetDirectionFromCoordinate(_mouseX, _mouseY))
-                    {
-                        case CompassDirection.NoOperation:
-                            break;
-                        case CompassDirection.North:
-                            _textOutput!.TypeWrite("", "North");
-                            MovePlayer(-1, 0);
-                            break;
-                        case CompassDirection.Ne:
-                            _textOutput!.TypeWrite("", "Northeast");
-                            MovePlayer(-1, 1);
-                            break;
-                        case CompassDirection.East:
-                            _textOutput!.TypeWrite("", "East");
-                            MovePlayer(0, 1);
-                            break;
-                        case CompassDirection.Se:
-                            _textOutput!.TypeWrite("", "Southeast");
-                            MovePlayer(1, 1);
-                            break;
-                        case CompassDirection.South:
-                            _textOutput!.TypeWrite("", "South");
-                            MovePlayer(1, 0);
-                            break;
-                        case CompassDirection.Sw:
-                            _textOutput!.TypeWrite("", "Southwest");
-                            MovePlayer(1, -1);
-                            break;
-                        case CompassDirection.West:
-                            _textOutput!.TypeWrite("", "West");
-                            MovePlayer(0, -1);
-                            break;
-                        case CompassDirection.Nw:
-                            _textOutput!.TypeWrite("", "Northwest");
-                            MovePlayer(-1, -1);
-                            break;
-                    }
-                    break;
-                case GameState.RunFightBribe:
-                    var fightButton = new Rectangle(241, 9, 25, 16);
-                    var runButton = new Rectangle(241, 47, 25, 16);
-                    var bribeButton = new Rectangle(241, 86, 25, 16);
-
-                    if (fightButton.HitTest(_mouseX, _mouseX))
-                    {
-                        Fight();
-                    }
-                    else if (runButton.HitTest(_mouseX, _mouseX))
-                    {
-                        _textOutput!.TypeWrite("", "Run!");
-                        Run();
-                    }
-                    else if (bribeButton.HitTest(_mouseX, _mouseX))
-                    {
-                        _textOutput!.TypeWrite("", "Bribe!");
-                        Bribe();
-                    }
-                    break;
-                case GameState.EnterCombatPoints:
-                    break;
-            }
-
-            LockGui(false);
+                if (fightButton.HitTest(_mouseX, _mouseX))
+                {
+                    Fight(true);
+                }
+                else if (runButton.HitTest(_mouseX, _mouseX))
+                {
+                    _textOutput!.TypeWrite("", "Run!");
+                    Run();
+                }
+                else if (bribeButton.HitTest(_mouseX, _mouseX))
+                {
+                    _textOutput!.TypeWrite("", "Bribe!");
+                    Bribe();
+                }
+                break;
+            case GameState.EnterCombatPoints:
+                break;
         }
+
+        LockGui(false);
     }
 
-    private void Fight()
+    private void Fight(bool prompt)
     {
         if (_currentMonster == null || _gameProperties == null)
             throw new SystemException("No current monster to fight or no game properties.");
 
-        _textOutput!.TypeWrite("", "Fight! How many combat points? Type a number and press Enter.", "");
+        if (prompt)
+            _textOutput!.TypeWrite("", "Fight! How many combat points? Type a number and press Enter.", "");
+
         _isInFight = true;
         pictureBox1.Invalidate();
         _numberInput = new NumberInput(Font);
@@ -322,11 +327,18 @@ public partial class MainWindow : Form
             throw new SystemException("No current monster to fight or no number input.");
 
         var playerCombatPoints = _numberInput.GetNumber();
-        _textOutput.TypeWrite($"You entered {playerCombatPoints} combat points.");
-        _numberInput.Clear();
         
-        // TODO: Check input and substract from player.
+        if (playerCombatPoints > _gameProperties.PlayerCombatStrength)
+        {
+            _textOutput.AssignLastRow(playerCombatPoints.ToString());
+            _textOutput.TypeWrite($"But you only have {_gameProperties.PlayerCombatStrength} points. How many combat points?", "");
+            Fight(false);
+            return;
+        }
 
+        _textOutput.AssignLastRow(playerCombatPoints.ToString());
+        _numberInput.Clear();
+        _gameProperties.PlayerCombatStrength -= playerCombatPoints;
         var result = _currentMonster.ResolveCombat(playerCombatPoints);
         _isInFight = false;
         var monsterCombatStrength = _currentMonster.MonsterCombatStrength;
@@ -337,7 +349,7 @@ public partial class MainWindow : Form
             addPoints += monsterCombatStrength / 20;
             addPoints += MapGenerator.Rnd.Next(0, 15);
             _gameProperties.PlayerCombatStrength += addPoints;
-            _textOutput.TypeWrite("", "You sure smashed that monster!");
+            _textOutput.TypeWrite("You sure smashed that monster!");
             _gameProperties.Treasures.Add(_currentMonster.Treasure);
             _currentMonster = null;
             pictureBox1.Invalidate();
@@ -350,7 +362,30 @@ public partial class MainWindow : Form
         else
         {
             _currentMonster = null;
-            _textOutput.TypeWrite("", "You have been defeated by the monster!");
+
+            if (_gameProperties.Treasures.Count > 0)
+            {
+                if (_gameProperties.PrincessIsPickedUp)
+                {
+                    _textOutput.TypeWrite("Too bad... The monster ate you and took all your treasure, and he also gobbled up the princess.");
+                }
+                else
+                {
+                    _textOutput.TypeWrite("Too bad... The monster ate you and took all your treasure. ");
+                }
+
+            }
+            else
+            {
+                if (_gameProperties.PrincessIsPickedUp)
+                {
+                    _textOutput.TypeWrite("Too bad... The monster ate you and he also gobbled up the princess.");
+                }
+                else
+                {
+                    _textOutput.TypeWrite("Too bad... The monster ate you.");
+                }
+            }
         }
 
         pictureBox1.Refresh();
