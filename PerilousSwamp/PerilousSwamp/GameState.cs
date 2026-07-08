@@ -5,5 +5,5 @@ public enum GameState
     PickDirection,
     RunFightBribe,
     EnterCombatPoints,
-    GameOver
+    TryAgain
 }

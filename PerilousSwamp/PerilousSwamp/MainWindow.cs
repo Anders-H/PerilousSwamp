@@ -164,6 +164,9 @@ public partial class MainWindow : Form
                 case GameState.EnterCombatPoints:
                     _numberInput?.Draw(graphics, 8, 186);
                     break;
+                case GameState.TryAgain:
+                    graphics.DrawImage(Properties.Resources.yesno, new Rectangle(220, 16, 100, 79));
+                    break;
             }
         }
 
@@ -362,33 +365,27 @@ public partial class MainWindow : Form
         else
         {
             _currentMonster = null;
+            const string princessFedToDragon = "Pity about the princess... The wizard fed her to a dragon. The king is not all that pleased.";
 
             if (_gameProperties.Treasures.Count > 0)
             {
-                if (_gameProperties.PrincessIsPickedUp)
-                {
-                    _textOutput.TypeWrite("Too bad... The monster ate you and took all your treasure, and he also gobbled up the princess.");
-                }
-                else
-                {
-                    _textOutput.TypeWrite("Too bad... The monster ate you and took all your treasure. ");
-                }
-
+                _textOutput.TypeWrite(_gameProperties.PrincessIsPickedUp
+                    ? "Too bad... The monster ate you, took all your treasure, and he also gobbled up the princess."
+                    : $"Too bad... The monster ate you and took all your treasure. {princessFedToDragon}");
             }
             else
             {
-                if (_gameProperties.PrincessIsPickedUp)
-                {
-                    _textOutput.TypeWrite("Too bad... The monster ate you and he also gobbled up the princess.");
-                }
-                else
-                {
-                    _textOutput.TypeWrite("Too bad... The monster ate you.");
-                }
+                _textOutput.TypeWrite(_gameProperties.PrincessIsPickedUp
+                    ? "Too bad... The monster ate you and he also gobbled up the princess."
+                    : $"Too bad... The monster ate you. {princessFedToDragon}");
             }
+
+            _textOutput.TypeWrite("", "Try again? You could get lucky!");
+            _gameState = GameState.TryAgain;
+            _guiState = GuiState.WaitingForUserInput;
         }
 
-        pictureBox1.Refresh();
+        pictureBox1.Invalidate();
     }
 
     private void Run()
