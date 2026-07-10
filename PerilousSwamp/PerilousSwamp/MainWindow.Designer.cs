@@ -59,6 +59,10 @@
             this.imgListDekor.Images.SetKeyName(4, "warewolf_attack.png");
             this.imgListDekor.Images.SetKeyName(5, "phoenix.png");
             this.imgListDekor.Images.SetKeyName(6, "phoenix_attack.png");
+            this.imgListDekor.Images.SetKeyName(7, "bunyip.png");
+            this.imgListDekor.Images.SetKeyName(8, "bunyip_attack.png");
+            this.imgListDekor.Images.SetKeyName(9, "troll.png");
+            this.imgListDekor.Images.SetKeyName(10, "troll_attack.png");
             // 
             // imgListMap
             // 

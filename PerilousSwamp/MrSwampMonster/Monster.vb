@@ -14,7 +14,7 @@
         IsAlive = True
         IsGone = False
         Dim monsterNameFirstParts As String() = {"Fiendish", "Green", "Lean", "Hungry", "Nasty", "Tough", "Horrible", "Dirty", "Vile", "Feral", "Grimy", "Sinister", "Savage"}
-        Dim monsterNameLastParts As String() = {"Werewolf", "Phoenix"} ', "Bunyip", "Troll", "Goblin", "Ghoul", "Gorgon", "Dragon", "Orge", "Wizard", "Manticore", "Wraith", "Basilisk", "Harpy", "Minotaur"}
+        Dim monsterNameLastParts As String() = {"Werewolf", "Phoenix", "Bunyip", "Troll"} ', "Goblin", "Ghoul", "Gorgon", "Dragon", "Orge", "Wizard", "Manticore", "Wraith", "Basilisk", "Harpy", "Minotaur"}
         Dim monsterFirstIndex = Rnd.Next(0, monsterNameFirstParts.Length)
         Dim monsterSecondIndex = Rnd.Next(0, monsterNameFirstParts.Length)
 
@@ -31,12 +31,12 @@
 
     Function ResolveCombat(playerCombatPoints As Integer) As Integer
         Dim baseDifference As Integer = playerCombatPoints - MonsterCombatStrength
-        Dim randomRange = CType(Math.Round(Math.Abs(baseDifference) * 1.4), Integer)
+        Dim randomRange = CType(Math.Round(Math.Abs(baseDifference) * 0.9), Integer)
 
         If randomRange < 2 Then
             randomRange = 2
-        ElseIf randomRange > 60 Then
-            randomRange = 60
+        ElseIf randomRange > 30 Then
+            randomRange = 30
         End If
 
         Dim randomFactor As Integer = Rnd.Next(-randomRange, randomRange + 1)
