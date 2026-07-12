@@ -283,22 +283,20 @@ public partial class MainWindow : Form
                 }
                 break;
             case GameState.RunFightBribe:
-                var fightButton = new Rectangle(241, 9, 25, 16);
-                var runButton = new Rectangle(241, 47, 25, 16);
-                var bribeButton = new Rectangle(241, 86, 25, 16);
+                var fightButton = new Rectangle(240, 9, 56, 18);
+                var runButton = new Rectangle(240, 46, 56, 18);
+                var bribeButton = new Rectangle(240, 86, 56, 18);
 
-                if (fightButton.HitTest(_mouseX, _mouseX))
+                if (fightButton.HitTest(_mouseX, _mouseY))
                 {
                     Fight(true);
                 }
-                else if (runButton.HitTest(_mouseX, _mouseX))
+                else if (runButton.HitTest(_mouseX, _mouseY))
                 {
-                    _textOutput!.TypeWrite("", "Run!");
                     Run();
                 }
-                else if (bribeButton.HitTest(_mouseX, _mouseX))
+                else if (bribeButton.HitTest(_mouseX, _mouseY))
                 {
-                    _textOutput!.TypeWrite("", "Bribe!");
                     Bribe();
                 }
                 break;
@@ -364,33 +362,84 @@ public partial class MainWindow : Form
         }
         else
         {
-            _currentMonster = null;
-            const string princessFedToDragon = "Pity about the princess... The wizard fed her to a dragon. The king is not all that pleased.";
-
-            if (_gameProperties.Treasures.Count > 0)
-            {
-                _textOutput.TypeWrite(_gameProperties.PrincessIsPickedUp
-                    ? "Too bad... The monster ate you, took all your treasure, and he also gobbled up the princess."
-                    : $"Too bad... The monster ate you and took all your treasure. {princessFedToDragon}");
-            }
-            else
-            {
-                _textOutput.TypeWrite(_gameProperties.PrincessIsPickedUp
-                    ? "Too bad... The monster ate you and he also gobbled up the princess."
-                    : $"Too bad... The monster ate you. {princessFedToDragon}");
-            }
-
-            _textOutput.TypeWrite("", "Try again? You could get lucky!");
-            _gameState = GameState.TryAgain;
-            _guiState = GuiState.WaitingForUserInput;
+            Die("Too bad... ");
         }
 
         pictureBox1.Invalidate();
     }
 
+    private void Die(string ingress)
+    {
+        if (_gameProperties == null || _textOutput == null)
+            throw new SystemException();
+
+        _currentMonster = null;
+        const string princessFedToDragon = "Pity about the princess... The wizard fed her to a dragon. The king is not all that pleased.";
+
+        if (_gameProperties.Treasures.Count > 0)
+        {
+            _textOutput.TypeWrite(_gameProperties.PrincessIsPickedUp
+                ? $"{ingress}The monster ate you, took all your treasure, and he also gobbled up the princess."
+                : $"{ingress}The monster ate you and took all your treasure. {princessFedToDragon}");
+        }
+        else
+        {
+            _textOutput.TypeWrite(_gameProperties.PrincessIsPickedUp
+                ? $"{ingress}The monster ate you and he also gobbled up the princess."
+                : $"{ingress}The monster ate you. {princessFedToDragon}");
+        }
+
+        _textOutput.TypeWrite("", "Try again? You could get lucky!");
+        _gameState = GameState.TryAgain;
+        _guiState = GuiState.WaitingForUserInput;
+    }
+
     private void Run()
     {
+        if (_textOutput == null || _map == null || _gameProperties == null)
+            throw new SystemException("Null, null, null...");
 
+        var random = MapGenerator.Rnd.Next(0, 100);
+
+        if (random >= 92)
+        {
+            Die("Run! You sure run fast if you need to, but not fast enough. ");
+            return;
+        }
+        if (random >= 43)
+        {
+            for (var i = 0; i < 1000; i++)
+            {
+                var newX = _map.PlayerX + MapGenerator.Rnd.Next(-1, 2);
+                var newY = _map.PlayerY + MapGenerator.Rnd.Next(-1, 2);
+
+                if (newX == _map.PlayerX && newY == _map.PlayerY)
+                    continue;
+
+                if (!_map.IsPositionFree(newX, newY))
+                    continue;
+
+                var offsetX = newX - _map.PlayerX;
+                var offsetY = newY - _map.PlayerY;
+                _gameProperties.PlayerCombatStrength -= MapGenerator.Rnd.Next(1, 15);
+
+                if (_gameProperties.PlayerCombatStrength <= 0)
+                    _gameProperties.PlayerCombatStrength = MapGenerator.Rnd.Next(1, 8);
+
+                _textOutput.TypeWrite("", "Run! You sure run fast if you need to.");
+                _currentMonster = null;
+                pictureBox1.Invalidate();
+                MovePlayer(offsetY, offsetX);
+                return;
+            }
+        }
+
+        _textOutput.TypeWrite("", "Run! You sure run fast if you need to, but not fast enough. Now you can only fight. How many combat points?", "");
+        _isInFight = true;
+        pictureBox1.Invalidate();
+        _numberInput = new NumberInput(Font);
+        _gameState = GameState.EnterCombatPoints;
+        _guiState = GuiState.WaitingForUserInput;
     }
 
     private void Bribe()

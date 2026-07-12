@@ -6,7 +6,7 @@ public class Map
 {
     public const int Size = 20;
     public const int ViewportSize = 10;
-    public int[,] Grid { get; private set; }
+    public int[,] Grid { get; }
     public int PlayerX { get; set; }
     public int PlayerY { get; set; }
     public int PrincessX { get; private set; }
@@ -18,6 +18,14 @@ public class Map
     {
         Grid = MapGenerator.GenerateMap(this);
         UpdateViewport();
+    }
+
+    public bool IsPositionFree(int x, int y)
+    {
+        if (x < 0 || x >= Size || y < 0 || y >= Size)
+            return false;
+        
+        return Grid[y, x] != MapGenerator.Obstacle && Grid[y, x] != MapGenerator.Edge;
     }
 
     public void SetPlayerPosition(int x, int y)
