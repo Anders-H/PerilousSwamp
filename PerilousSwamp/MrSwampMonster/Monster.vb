@@ -9,12 +9,12 @@
     Public AliveImageIndex As Integer
     Public AttackImageIndex As Integer
 
-    Public Sub New(monsterCombatStrength As Integer)
+    Friend Sub New(monsterCombatStrength As Integer)
         Me.MonsterCombatStrength = monsterCombatStrength
         IsAlive = True
         IsGone = False
         Dim monsterNameFirstParts As String() = {"Fiendish", "Green", "Lean", "Hungry", "Nasty", "Tough", "Horrible", "Dirty", "Vile", "Feral", "Grimy", "Sinister", "Savage"}
-        Dim monsterNameLastParts As String() = {"Werewolf", "Phoenix", "Bunyip", "Troll"} ', "Goblin", "Ghoul", "Gorgon", "Dragon", "Orge", "Wizard", "Manticore", "Wraith", "Basilisk", "Harpy", "Minotaur"}
+        Dim monsterNameLastParts As String() = {"Werewolf", "Phoenix", "Bunyip", "Troll", "Goblin"} ', "Ghoul", "Gorgon", "Dragon", "Orge", "Wizard", "Manticore", "Wraith", "Basilisk", "Harpy", "Minotaur"}
         Dim monsterFirstIndex = Rnd.Next(0, monsterNameFirstParts.Length)
         Dim monsterSecondIndex = Rnd.Next(0, monsterNameFirstParts.Length)
 

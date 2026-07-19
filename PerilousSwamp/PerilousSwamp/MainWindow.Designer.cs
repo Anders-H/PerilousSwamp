@@ -63,6 +63,8 @@
             this.imgListDekor.Images.SetKeyName(8, "bunyip_attack.png");
             this.imgListDekor.Images.SetKeyName(9, "troll.png");
             this.imgListDekor.Images.SetKeyName(10, "troll_attack.png");
+            this.imgListDekor.Images.SetKeyName(11, "goblin.png");
+            this.imgListDekor.Images.SetKeyName(12, "goblin_attack.png");
             // 
             // imgListMap
             // 

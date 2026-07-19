@@ -11,11 +11,10 @@ namespace PerilousSwamp;
 public partial class MainWindow : Form
 {
     public new static Font Font;
+    private bool _isInFightForPrincess;
     private bool _isInFight;
     private const int MonsterImageOffset = 3;
     private Bitmap? _gameBitmap;
-    private int _mouseX;
-    private int _mouseY;
     private string _currentDecorationImage;
     private Monster? _currentMonster;
     private TextOutput? _textOutput;
@@ -33,6 +32,7 @@ public partial class MainWindow : Form
 
     public MainWindow()
     {
+        _isInFightForPrincess = false;
         _isInFight = false;
         _gameState = GameState.PickDirection;
         _currentMonster = null;
@@ -68,28 +68,8 @@ public partial class MainWindow : Form
         pictureBox1.Invalidate();
     }
 
-    private void MainWindow_Resize(object sender, EventArgs e)
-    {
-        const float imageAspect = 1.6f;
-        var clientAspect = (float)ClientSize.Width / ClientSize.Height;
-
-        int newWidth, newHeight;
-
-        if (imageAspect > clientAspect)
-        {
-            newWidth = ClientSize.Width;
-            newHeight = (int)(newWidth / imageAspect);
-        }
-        else
-        {
-            newHeight = ClientSize.Height;
-            newWidth = (int)(newHeight * imageAspect);
-        }
-
-        pictureBox1.Size = new Size(newWidth, newHeight);
-        pictureBox1.Location = new Point((ClientSize.Width - newWidth) / 2, (ClientSize.Height - newHeight) / 2);
-        pictureBox1.Invalidate();
-    }
+    private void MainWindow_Resize(object sender, EventArgs e) =>
+        WindowManagement.HandleWindowResize(ClientSize, pictureBox1);
 
     private void MainWindow_Shown(object sender, EventArgs e)
     {
@@ -169,6 +149,11 @@ public partial class MainWindow : Form
                     break;
             }
         }
+        else
+        {
+            if (_gameProperties is { MoveCount: < 4 })
+                graphics.DrawImage(Properties.Resources.symbolstutorial, new Rectangle(193, 18, 135, 72));
+        }
 
         e.Graphics.DrawImage(_gameBitmap, pictureBox1.ClientRectangle);
     }
@@ -187,31 +172,31 @@ public partial class MainWindow : Form
                 var physicalX = x + visibleX * 10;
                 var physicalY = y + visibleY * 10;
 
-                if (currentMapX is >= 0 and < Map.Size && currentMapY is >= 0 and < Map.Size)
+                if (currentMapX is < 0 or >= Map.Size || currentMapY is < 0 or >= Map.Size)
+                    continue;
+
+                var data = _map.Grid[currentMapY, currentMapX];
+
+                switch (data)
                 {
-                    var data = _map.Grid[currentMapY, currentMapX];
-
-                    switch (data)
-                    {
-                        case MapGenerator.Obstacle:
-                            g.DrawImage(imgListMap.Images[3], new Rectangle(physicalX, physicalY, 10, 10));
-                            break;
-                        case MapGenerator.Edge:
-                            g.DrawImage(imgListMap.Images[0], new Rectangle(physicalX, physicalY, 10, 10));
-                            break;
-                        case MapGenerator.Free:
-                        case MapGenerator.Player:
-                        case MapGenerator.Princess:
-                            // Draw nothing for free space. Player and princess is just their start position, not current.
-                            break;
-                    }
-
-                    if (currentMapX == _map.PlayerX && currentMapY == _map.PlayerY)
-                        g.DrawImage(imgListMap.Images[1], new Rectangle(physicalX, physicalY, 10, 10));
-
-                    if (!_gameProperties.PrincessIsPickedUp && currentMapX == _map.PrincessX && currentMapY == _map.PrincessY)
-                        g.DrawImage(imgListMap.Images[2], new Rectangle(physicalX, physicalY, 10, 10));
+                    case MapGenerator.Obstacle:
+                        g.DrawImage(imgListMap.Images[3], new Rectangle(physicalX, physicalY, 10, 10));
+                        break;
+                    case MapGenerator.Edge:
+                        g.DrawImage(imgListMap.Images[0], new Rectangle(physicalX, physicalY, 10, 10));
+                        break;
+                    case MapGenerator.Free:
+                    case MapGenerator.Player:
+                    case MapGenerator.Princess:
+                        // Draw nothing for free space. Player and princess is just their start position, not current.
+                        break;
                 }
+
+                if (currentMapX == _map.PlayerX && currentMapY == _map.PlayerY)
+                    g.DrawImage(imgListMap.Images[1], new Rectangle(physicalX, physicalY, 10, 10));
+
+                if (!_gameProperties.PrincessIsPickedUp && currentMapX == _map.PrincessX && currentMapY == _map.PrincessY)
+                    g.DrawImage(imgListMap.Images[2], new Rectangle(physicalX, physicalY, 10, 10));
             }
         }
     }
@@ -221,30 +206,26 @@ public partial class MainWindow : Form
         if (pictureBox1 == null)
             return;
 
-        var scaleX = 320.0 / pictureBox1.Width;
-        var scaleY = 200.0 / pictureBox1.Height;
-        _mouseX = (int)(e.X * scaleX);
-        _mouseY = (int)(e.Y * scaleY);
-
+        WindowManagement.HandleMouseMove(pictureBox1, e);
 #if DEBUG
-        Text = $@"{_mouseX} x {_mouseY}";
+        Text = $@"{WindowManagement.MouseX} x {WindowManagement.MouseY}";
 #endif
     }
 
     private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
     {
-        if (_textOutput == null)
+        if (_textOutput == null || _gameProperties == null)
             throw new SystemException("This is broken.");
 
         if (_guiState != GuiState.WaitingForUserInput)
-            return;
+            return; 
 
         LockGui(true);
 
         switch (_gameState)
         {
             case GameState.PickDirection:
-                switch (Compass.GetDirectionFromCoordinate(_mouseX, _mouseY))
+                switch (Compass.GetDirectionFromCoordinate(WindowManagement.MouseX, WindowManagement.MouseY))
                 {
                     case CompassDirection.NoOperation:
                         break;
@@ -287,18 +268,22 @@ public partial class MainWindow : Form
                 var runButton = new Rectangle(240, 46, 56, 18);
                 var bribeButton = new Rectangle(240, 86, 56, 18);
 
-                if (fightButton.HitTest(_mouseX, _mouseY))
+                if (fightButton.HitTest(WindowManagement.MouseX, WindowManagement.MouseY))
                 {
+                    _gameProperties.MoveCount++;
                     Fight(true);
                 }
-                else if (runButton.HitTest(_mouseX, _mouseY))
+                else if (runButton.HitTest(WindowManagement.MouseX, WindowManagement.MouseY))
                 {
+                    _gameProperties.MoveCount++;
                     Run();
                 }
-                else if (bribeButton.HitTest(_mouseX, _mouseY))
+                else if (bribeButton.HitTest(WindowManagement.MouseX, WindowManagement.MouseY))
                 {
+                    _gameProperties.MoveCount++;
                     Bribe();
                 }
+
                 break;
             case GameState.EnterCombatPoints:
                 break;
@@ -352,6 +337,7 @@ public partial class MainWindow : Form
             _gameProperties.PlayerCombatStrength += addPoints;
             _textOutput.TypeWrite("You sure smashed that monster!");
             _gameProperties.Treasures.Add(_currentMonster.Treasure);
+            _currentMonster.IsAlive = false;
             _currentMonster = null;
             pictureBox1.Invalidate();
             _textOutput.TypeWrite("", $"Your ill-gotten gains now come to {addPoints} points.");
@@ -469,8 +455,9 @@ public partial class MainWindow : Form
             _guiState = GuiState.WaitingForUserInput;
             pictureBox1.Invalidate();
         }
-        else if (data == MapGenerator.Free)
+        else if (data == MapGenerator.Free || data == MapGenerator.Princess)
         {
+            // TODO: Also support princess fetching.
             _map.PlayerX = newX;
             _map.PlayerY = newY;
             _map.UpdateViewport();
@@ -521,7 +508,8 @@ public partial class MainWindow : Form
         }
         else if (data == MapGenerator.Princess)
         {
-            if (_gameProperties!.PrincessIsPickedUp)
+            // TODO: Move up!
+            if (_gameProperties.PrincessIsPickedUp)
             {
                 _map.PlayerX = newX;
                 _map.PlayerY = newY;
@@ -569,31 +557,10 @@ public partial class MainWindow : Form
 
     private void MainWindow_KeyPress(object sender, KeyPressEventArgs e)
     {
-        if (_guiState == GuiState.WaitingForUserInput)
-        {
-            if (_gameState == GameState.EnterCombatPoints)
-            {
-                if (_numberInput == null)
-                    return;
+        if (_numberInput == null)
+            return;
 
-                switch (e.KeyChar)
-                {
-                    case '0':
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
-                    case '5':
-                    case '6':
-                    case '7':
-                    case '8':
-                    case '9':
-                        _numberInput.EnterDigit(e.KeyChar);
-                        pictureBox1.Refresh();
-                        break;
-                }
-            }
-        }
+        WindowManagement.HandleKeyPress(pictureBox1, _guiState, _gameState, _numberInput, e);
     }
 
     private void MainWindow_KeyDown(object sender, KeyEventArgs e)

@@ -93,6 +93,16 @@ namespace PerilousSwamp.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap symbolstutorial {
+            get {
+                object obj = ResourceManager.GetObject("symbolstutorial", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap yesno {
             get {
                 object obj = ResourceManager.GetObject("yesno", resourceCulture);

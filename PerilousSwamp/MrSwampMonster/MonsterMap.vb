@@ -14,9 +14,9 @@
             Return monster
         End If
 
-        Dim strength As Double = Monster.Rnd.Next(1, 12)
+        Dim strength As Double = Monster.Rnd.Next(1, 13)
         strength *= 3.5
-        strength += Monster.Rnd.Next(0, 25)
+        strength += Monster.Rnd.Next(1, 27)
         strength = Math.Round(strength)
         monster = New Monster(CType(strength, Integer))
         _monsters.Add(locationString, monster)
